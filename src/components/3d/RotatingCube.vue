@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useLoop } from '@tresjs/core'
 import { ref } from 'vue'
+
+import { useLoop } from '@tresjs/core'
 
 const boxRef = ref()
 
