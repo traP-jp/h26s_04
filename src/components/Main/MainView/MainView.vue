@@ -1,7 +1,16 @@
 <template>
   <div :class="$style.container">
     <div id="header" :class="$style.headerContainer" />
-    <div :class="$style.layoutContainer" :data-layout="layout">
+    <div
+      :class="$style.layoutContainer"
+      :data-layout="layout"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerUp"
+      @wheel.prevent="onWheel"
+    >
+      <StarfieldBackground />
       <QallAudio />
 
       <PrimaryViewSelector :is-ready="isMounted" />
@@ -15,12 +24,15 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { useMainViewStore } from '/@/store/ui/mainView'
+import { useSkyCamera } from '/@/composables/useSkyCamera'
 
 import PrimaryViewSelector from './PrimaryViewSelector.vue'
 import QallAudio from './QallView/QallAudio.vue'
 import SecondaryViewSelector from './SecondaryViewSelector.vue'
+import StarfieldBackground from './StarfieldBackground.vue'
 
 const { layout } = useMainViewStore()
+const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
 
 const isMounted = ref(false)
 onMounted(() => {

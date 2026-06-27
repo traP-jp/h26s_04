@@ -27,7 +27,7 @@ const { openNav } = useNavigationController()
 $headerHeight: 80px;
 
 .container {
-  @include background-primary;
+  background: transparent;
   @include color-ui-primary;
   position: relative;
   display: flex;

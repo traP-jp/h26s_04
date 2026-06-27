@@ -136,7 +136,7 @@ const buildSiblingLink = (channel: string) =>
 
 .text {
   @include color-ui-secondary;
-  @include background-secondary;
+  background: transparent;
   @include size-body2;
   border-radius: 8px;
   text-align: center;

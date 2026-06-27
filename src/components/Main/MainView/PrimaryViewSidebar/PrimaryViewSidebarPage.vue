@@ -46,7 +46,7 @@ const { closeSidebar } = useSidebar()
   flex-direction: column;
   width: 320px;
   height: 100%;
-  background: var(--specific-side-bar-background);
+  background: transparent;
   overflow: auto;
 }
 
