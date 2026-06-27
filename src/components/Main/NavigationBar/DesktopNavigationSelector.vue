@@ -4,12 +4,13 @@
     <NavigationSelectorItem
       :key="entries[1]?.type"
       :class="$style.item"
-      :is-selected="!isNavigationClosed && currentNavigation === entries[1]?.type"
+      :is-selected="
+        !isNavigationClosed && currentNavigation === entries[1]?.type
+      "
       :has-notification="entries[1]?.hasNotification"
       :icon-mdi="entries[1]?.iconMdi"
-      :icon-name="entries[1]?.iconName||''"
-      
-      @click="onNavigationItemClick(entries[1]?.type||'channels')"
+      :icon-name="entries[1]?.iconName || ''"
+      @click="onNavigationItemClick(entries[1]?.type || 'channels')"
     />
     <div v-if="showSeparator" :class="$style.separator" />
     <NavigationSelectorItem

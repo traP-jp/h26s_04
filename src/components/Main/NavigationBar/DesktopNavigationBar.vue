@@ -53,12 +53,15 @@
 </template>
 
 <script lang="ts" setup>
-import { randomString } from '/@/lib/basic/randomString'
+import { computed, toRaw } from 'vue'
 
 import DesktopNavigationSelector from '/@/components/Main/NavigationBar/DesktopNavigationSelector.vue'
 import DesktopToolBox from '/@/components/Main/NavigationBar/DesktopToolBox.vue'
 import EphemeralNavigationContent from '/@/components/Main/NavigationBar/EphemeralNavigationContent/EphemeralNavigationContent.vue'
-import NavigationContent from '/@/components/Main/NavigationBar/NavigationContent.vue'
+import { randomString } from '/@/lib/basic/randomString'
+import { filterTrees } from '/@/lib/basic/tree'
+import { useBrowserSettings } from '/@/store/app/browserSettings'
+import { useChannelTree } from '/@/store/domain/channelTree'
 import { useNavigationLayoutStore } from '/@/store/ui/navigationLayout'
 
 import ChannelTreeComponent from './ChannelList/ChannelTree.vue'
@@ -81,18 +84,12 @@ const {
   resizerRef: navigationResizerRef
 } = useNavigationLayoutStore()
 
-const { onDragStart, onDragging, onDragEnd, navigationWidth } =
-  useNavigationResizer()
+const { onDragStart, onDragging, onDragEnd } = useNavigationResizer()
 
 const allPanelId = randomString()
 
-import { computed, toRaw } from 'vue'
-import { filterTrees } from '/@/lib/basic/tree'
-import { useChannelTree } from '/@/store/domain/channelTree'
-import { useBrowserSettings } from '/@/store/app/browserSettings'
-
-const { channelTree, starredChannelTree } = useChannelTree()
-const { showArchivedChannels, filterStarChannel } = useBrowserSettings()
+const { channelTree } = useChannelTree()
+const { showArchivedChannels } = useBrowserSettings()
 
 const topLevelChannels = computed(() =>
   filterTrees(
