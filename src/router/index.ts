@@ -20,7 +20,8 @@ export enum RouteName {
   Consent = 'consent',
   GroupManager = 'group-manager',
   Settings = 'settings',
-  NotFound = 'not-found'
+  NotFound = 'not-found',
+  ThreeD = '3d'
 }
 
 export const constructChannelPath = (path: string) =>
@@ -114,6 +115,11 @@ const routes: RouteRecordRaw[] = [
     name: RouteName.Consent,
     component: AuthPage,
     props: { type: 'consent' }
+  },
+  {
+    path: '/3d',
+    name: RouteName.ThreeD,
+    component: () => import('/@/views/ThreeDPage.vue')
   },
   {
     path: '/:catchAll(.*)',
