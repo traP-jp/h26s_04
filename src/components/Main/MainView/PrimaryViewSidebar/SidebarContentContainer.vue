@@ -7,16 +7,23 @@
   >
     <div
       v-if="title"
-      :class="$style.header"
+      :class="[$style.header, rightAlign && $style.headerRightAlign]"
       :data-is-clickable="$boolAttr(titleClickable)"
       @click="emit('toggle')"
     >
-      <h2 :class="$style.headerTitle">
+      <h2
+        :class="[
+          $style.headerTitle,
+          rightAlign && $style.headerTitleRightAlign
+        ]"
+      >
         {{ title }}
       </h2>
       <slot name="header-control" />
     </div>
-    <slot />
+    <div :class="[$style.slot, rightAlign && $style.rightAlign]">
+      <slot />
+    </div>
   </div>
 </template>
 
@@ -27,11 +34,13 @@ const props = withDefaults(
     largePadding?: boolean
     clickable?: boolean
     titleClickable?: boolean
+    rightAlign?: boolean
   }>(),
   {
     largePadding: false,
     clickable: false,
-    titleClickable: false
+    titleClickable: false,
+    rightAlign: false
   }
 )
 
@@ -81,5 +90,22 @@ const onContainerClick = () => {
 .headerTitle {
   @include size-body1;
   font-weight: bold;
+}
+
+.headerRightAlign {
+  justify-content: flex-end;
+}
+
+.headerTitleRightAlign {
+  text-align: right;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+}
+
+.rightAlign {
+  align-items: flex-end;
 }
 </style>

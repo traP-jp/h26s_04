@@ -1,21 +1,27 @@
 <template>
-  <div :class="$style.container">
-    <AIcon
-      :class="$style.icon"
-      mdi
-      name="chevron-double"
-      :size="28"
-      @click="emit('open')"
-    />
-    <UserIconEllipsisList
-      direction="col"
-      transition="fade-bottom"
-      count-clickable
-      show-count
-      :user-ids="viewerIds"
-      :inactive-user-ids="inactiveViewerIds"
-      :class="$style.rest"
-      @count-click="emit('openViewers')"
+  <div :class="$style.overwrapContainer">
+    <div :class="$style.container">
+      <AIcon
+        :class="$style.icon"
+        mdi
+        name="chevron-double"
+        :size="28"
+        @click="emit('open')"
+      />
+      <UserIconEllipsisList
+        direction="col"
+        transition="fade-bottom"
+        count-clickable
+        show-count
+        :user-ids="viewerIds"
+        :inactive-user-ids="inactiveViewerIds"
+        :class="$style.rest"
+        @count-click="emit('openViewers')"
+      />
+    </div>
+    <ChannelSidebarHiddenCurrentViewers
+      :viewer-ids="viewerIds"
+      :inactive-viewer-ids="inactiveViewerIds"
     />
   </div>
 </template>
@@ -24,6 +30,8 @@
 import AIcon from '/@/components/UI/AIcon.vue'
 import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
 import type { UserId } from '/@/types/entity-ids'
+
+import ChannelSidebarHiddenCurrentViewers from './ChannelSidebarHiddenCurrentViewers.vue'
 
 withDefaults(
   defineProps<{
@@ -42,6 +50,13 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss" module>
+.overwrapContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
 .container {
   @include color-ui-primary;
   display: flex;
