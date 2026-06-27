@@ -13,25 +13,9 @@ const useSidebar = () => {
    *
    * モバイルの場合は引き出し開始時点で表示する必要があるため特殊な扱いとなる
    */
-  const shouldShowSidebar = computed(
-    () =>
-      state.value === MainViewComponentState.SidebarShown ||
-      (isMobile.value &&
-        (state.value === MainViewComponentState.SidebarAppearing ||
-          state.value === MainViewComponentState.SidebarAppearingAuto ||
-          state.value === MainViewComponentState.SidebarDisappearing ||
-          state.value === MainViewComponentState.SidebarDisappearingAuto))
-  )
+  const shouldShowSidebar = computed(() => true)
 
-  /**
-   * 折り畳まれたサイドバーが表示されている必要があるか
-   *
-   * モバイルの場合、遷移状態で隠してしまうと、折り畳まれたサイドバー上でドラッグするとサイドバーが開かないので
-   * 遷移中は隠さないようにする
-   */
-  const shouldShowHiddenSidebar = computed(
-    () => state.value !== MainViewComponentState.SidebarShown
-  )
+  const shouldShowHiddenSidebar = computed(() => false)
 
   const openSidebar = () => {
     state.value = isMobile.value

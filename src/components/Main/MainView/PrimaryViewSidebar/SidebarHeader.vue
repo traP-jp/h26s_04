@@ -39,6 +39,7 @@ withDefaults(
   height: 100%;
   // 中身のtext-overflow: ellipsis用
   min-width: 0;
+  justify-content: flex-end;
 }
 
 .icon {

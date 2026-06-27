@@ -1,22 +1,21 @@
 <template>
-  <SidebarContentContainer right-align title="メンバー">
-    <EmptyState v-if="isForceNotification"> 強制通知チャンネル </EmptyState>
-    <EmptyState v-else-if="!subscribers">
-      メンバーの取得に失敗しました
-    </EmptyState>
-    <ChannelSidebarMemberIcons
-      v-else-if="subscribers.size > 0"
-      :viewer-states="viewStates"
-    />
-    <EmptyState v-else> メンバーはいません </EmptyState>
-  </SidebarContentContainer>
+    <div :class="$style.stats">
+        Subscribers:
+        <div v-if="isForceNotification"> 強制通知チャンネル </div>
+        <div v-else-if="!subscribers">
+            メンバーの取得に失敗しました
+        </div>
+        <ChannelSidebarMemberIcons
+            v-else-if="subscribers.size > 0"
+            :viewer-states="viewStates"
+        />
+        <div v-else> No Subscribers</div>
+    </div>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 
-import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import EmptyState from '/@/components/UI/EmptyState.vue'
 import useChannelSubscribers from '/@/composables/subscription/useChannelSubscribers'
 import { isDefined } from '/@/lib/basic/array'
 import { useChannelsStore } from '/@/store/entities/channels'
@@ -34,7 +33,6 @@ const props = withDefaults(
     viewerIds: () => []
   }
 )
-
 const { channelsMap } = useChannelsStore()
 const { activeUsersMap } = useUsersStore()
 
@@ -57,4 +55,11 @@ const viewStates = computed(() =>
 )
 </script>
 
-<style lang="scss" module></style>
+<style lang="scss" module>
+    .stats {
+    @include color-ui-tertiary;
+    white-space: nowrap;
+    text-align: right;
+    margin-right: 16px;
+    }
+</style>

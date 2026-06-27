@@ -23,18 +23,26 @@
       :viewer-ids="viewerIds"
       :inactive-viewer-ids="inactiveViewerIds"
     />
+
+    <ChannelSidebarHiddenMember 
+      :channel-id="channelId"
+      :viewer-ids="viewerIds"
+      />
+
   </div>
 </template>
 
 <script lang="ts" setup>
 import AIcon from '/@/components/UI/AIcon.vue'
 import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
-import type { UserId } from '/@/types/entity-ids'
+import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarHiddenCurrentViewers from './ChannelSidebarHiddenCurrentViewers.vue'
+import ChannelSidebarHiddenMember from './ChannelSidebarHiddenMember.vue';
 
 withDefaults(
   defineProps<{
+    channelId: ChannelId
     viewerIds?: readonly UserId[]
     inactiveViewerIds?: readonly UserId[]
   }>(),

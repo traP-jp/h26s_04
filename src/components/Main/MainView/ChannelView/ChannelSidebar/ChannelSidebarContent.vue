@@ -6,7 +6,7 @@
       :inactive-viewer-ids="inactiveViewerIds"
       :class="$style.sidebarItem"
     />
-    <ChannelSidebarQall
+    <!-- <ChannelSidebarQall
       v-if="qallUserIds.length > 0"
       :qall-user-ids="qallUserIds"
       :class="$style.sidebarItem"
@@ -24,7 +24,7 @@
     <ChannelSidebarRelation
       :channel-id="channelId"
       :class="$style.sidebarItem"
-    />
+    /> -->
     <ChannelSidebarMember
       :channel-id="channelId"
       :class="$style.sidebarItem"
@@ -38,20 +38,20 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+// import { computed } from 'vue'
 
-import { useQall } from '/@/composables/qall/useQall'
+// import { useQall } from '/@/composables/qall/useQall'
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarBots from './ChannelSidebarBots.vue'
-import ChannelSidebarEvents from './ChannelSidebarEvents.vue'
 import ChannelSidebarMember from './ChannelSidebarMember.vue'
+import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
+/* import ChannelSidebarEvents from './ChannelSidebarEvents.vue'
 import ChannelSidebarPinned from './ChannelSidebarPinned.vue'
 import ChannelSidebarQall from './ChannelSidebarQall.vue'
 import ChannelSidebarRelation from './ChannelSidebarRelation.vue'
 import ChannelSidebarTopic from './ChannelSidebarTopic.vue'
-import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
-
+ */
 const isViewersDetailOpen = defineModel<boolean>('isViewersDetailOpen', {
   required: true
 })
@@ -68,7 +68,7 @@ const props = withDefaults(
   }
 )
 
-const emit = defineEmits<{
+/* const emit = defineEmits<{
   (e: 'moveToPinned'): void
   (e: 'moveToEvents'): void
 }>()
@@ -80,7 +80,7 @@ const qallUserIds = computed(
     roomWithParticipants.value
       .find(room => room.channel.id === props.channelId)
       ?.participants?.map(participant => participant.user.id) ?? []
-)
+) */
 </script>
 
 <style lang="scss" module>
@@ -92,6 +92,7 @@ const qallUserIds = computed(
   &:last-child {
     margin-bottom: 0;
   }
+  background: transparent;
 }
 
 .edit {
