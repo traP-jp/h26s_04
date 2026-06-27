@@ -3,6 +3,7 @@ import * as path from 'path'
 import fs from 'fs'
 import { Agent as HttpsAgent } from 'https'
 
+import { templateCompilerOptions } from '@tresjs/core'
 import VuePlugin from '@vitejs/plugin-vue'
 import autoprefixer from 'autoprefixer'
 import browserslist from 'browserslist'
@@ -118,7 +119,9 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html}' /* default */, '**/assets/**/*.svg']
       }
     }),
-    VuePlugin(),
+    VuePlugin({
+      ...templateCompilerOptions
+    }),
     svgLoader({
       defaultImport: 'component',
       svgoConfig: {
