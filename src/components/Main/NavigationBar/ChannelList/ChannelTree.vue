@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :class="$style.tree">
     <ChannelElement
       v-for="channel in channels"
       :key="channel.id"
@@ -55,10 +55,27 @@ const toggleChildren = (channelId: ChannelId) => {
 
 <style lang="scss" module>
 .element {
-  margin: 4px 0;
+  margin: 1px 0;
+}
+
+.tree {
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-family:
+    'Monaspace Neon', 'Monaspace Argon', 'Monaspace Xenon', 'Monaspace Krypton',
+    'Monaspace Radon', 'Monaspace', 'JetBrains Mono', 'Cascadia Code',
+    'Fira Code', 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+  font-feature-settings: 'calt' 1;
+  font-size: 0.92rem;
+  letter-spacing: -0.02em;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .children {
-  margin-left: 12px;
+  margin-left: 8px;
 }
 </style>

@@ -71,6 +71,7 @@ const onContainerClick = () => {
   &[data-is-large-padding] {
     padding: 16px;
   }
+  background-color: transparent;
 }
 
 .header {
@@ -85,6 +86,7 @@ const onContainerClick = () => {
     // 折り畳み時の見た目調整
     margin-bottom: 0;
   }
+  background-color: transparent;
 }
 
 .headerTitle {

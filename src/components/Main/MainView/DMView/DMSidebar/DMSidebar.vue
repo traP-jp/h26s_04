@@ -26,20 +26,12 @@
         @move-back="moveToDefaultPage"
       />
     </template>
-    <template #opener>
-      <ChannelSidebarHidden
-        :viewer-ids="activeViewingUsers"
-        :inactive-viewer-ids="inactiveViewingUsers"
-        @open="openSidebar"
-      />
-    </template>
   </PrimaryViewSidebar>
 </template>
 
 <script lang="ts" setup>
 import type { Pin } from '@traptitech/traq'
 
-import ChannelSidebarHidden from '/@/components/Main/MainView/ChannelView/ChannelSidebar/ChannelSidebarHidden.vue'
 import PrimaryViewSidebar from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebar.vue'
 import PrimaryViewSidebarPage from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebarPage.vue'
 import SidebarEventsPage from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarEventsPage.vue'
@@ -59,11 +51,6 @@ defineProps<{
   inactiveViewingUsers: UserId[]
 }>()
 
-const {
-  page,
-  moveToDefaultPage,
-  moveToPinnedPage,
-  moveToEventsPage,
-  openSidebar
-} = useChannelSidebarCommon()
+const { page, moveToDefaultPage, moveToPinnedPage, moveToEventsPage } =
+  useChannelSidebarCommon()
 </script>

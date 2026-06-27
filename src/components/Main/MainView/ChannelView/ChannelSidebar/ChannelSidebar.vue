@@ -12,8 +12,6 @@
             :viewer-ids="activeViewingUsers"
             :inactive-viewer-ids="inactiveViewingUsers"
             :pinned-messages-count="pinnedMessages.length"
-            @move-to-pinned="moveToPinnedPage"
-            @move-to-events="moveToEventsPage"
           />
         </template>
       </PrimaryViewSidebarPage>
@@ -26,14 +24,6 @@
         v-else-if="page === 'events'"
         :channel-id="channelId"
         @move-back="moveToDefaultPage"
-      />
-    </template>
-    <template #opener>
-      <ChannelSidebarHidden
-        :viewer-ids="activeViewingUsers"
-        :inactive-viewer-ids="inactiveViewingUsers"
-        @open="openSidebar"
-        @open-viewers="openViewers"
       />
     </template>
   </PrimaryViewSidebar>
@@ -55,7 +45,6 @@ import { useChannelsStore } from '/@/store/entities/channels'
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarContent from './ChannelSidebarContent.vue'
-import ChannelSidebarHidden from './ChannelSidebarHidden.vue'
 
 const props = defineProps<{
   channelId: ChannelId
@@ -66,22 +55,11 @@ const props = defineProps<{
 }>()
 
 const { channelsMap } = useChannelsStore()
-const {
-  page,
-  moveToDefaultPage,
-  moveToPinnedPage,
-  moveToEventsPage,
-  openSidebar
-} = useChannelSidebarCommon()
+const { page, moveToDefaultPage } = useChannelSidebarCommon()
 
 const channelName = computed(
   () => channelsMap.value.get(props.channelId)?.name ?? ''
 )
 
-const { value: isViewersDetailOpen, open: openViewersDetail } = useToggle(false)
-
-const openViewers = () => {
-  openSidebar()
-  openViewersDetail()
-}
+const { value: isViewersDetailOpen } = useToggle(false)
 </script>

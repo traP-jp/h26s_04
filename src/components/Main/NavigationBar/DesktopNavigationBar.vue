@@ -6,22 +6,12 @@
         { [$style.scrollbarHidden]: isNavigationClosed }
       ]"
     >
+      <DesktopToolBox />
       <ChannelTreeComponent
         :id="allPanelId"
         :channels="topLevelChannels"
         role="tabpanel"
       />
-      <DesktopNavigationSelector
-        :current-navigation="navigationSelectorState.currentNavigation"
-        :current-ephemeral-navigation="
-          ephemeralNavigationSelectorState.currentNavigation
-        "
-        @navigation-change="onNavigationChange"
-        @ephemeral-navigation-change="onEphemeralNavigationChange"
-        @ephemeral-entry-remove="onEphemeralEntryRemove"
-        @ephemeral-entry-add="onEphemeralEntryAdd"
-      />
-      <DesktopToolBox />
     </div>
     <div
       ref="navigationRef"
@@ -55,7 +45,6 @@
 <script lang="ts" setup>
 import { computed, toRaw } from 'vue'
 
-import DesktopNavigationSelector from '/@/components/Main/NavigationBar/DesktopNavigationSelector.vue'
 import DesktopToolBox from '/@/components/Main/NavigationBar/DesktopToolBox.vue'
 import EphemeralNavigationContent from '/@/components/Main/NavigationBar/EphemeralNavigationContent/EphemeralNavigationContent.vue'
 import { randomString } from '/@/lib/basic/randomString'
@@ -68,14 +57,7 @@ import ChannelTreeComponent from './ChannelList/ChannelTree.vue'
 import useNavigation from './composables/useNavigation'
 import useNavigationResizer from './composables/useNavigationResizer'
 
-const {
-  navigationSelectorState,
-  ephemeralNavigationSelectorState,
-  onNavigationChange,
-  onEphemeralNavigationChange,
-  onEphemeralEntryRemove,
-  onEphemeralEntryAdd
-} = useNavigation()
+const { ephemeralNavigationSelectorState } = useNavigation()
 
 const {
   isNavigationClosed,
