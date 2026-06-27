@@ -76,10 +76,19 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
     totalMessageCount.value++
   })
   useMittListener(messageMitt, 'deleteMessage', ({ channelId }) => {
+    if (channelId === undefined) {
+      if (!isLoading.value) {
+        fetch()
+      }
+      return
+    }
+
     if (channelId !== props.channelId) return
 
     if (totalMessageCount.value === undefined) {
-      fetch()
+      if (!isLoading.value) {
+        fetch()
+      }
       return
     }
 
