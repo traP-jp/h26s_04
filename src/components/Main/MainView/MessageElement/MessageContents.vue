@@ -1,14 +1,20 @@
 <template>
   <div :class="$style.container">
-    <UserIcon :class="$style.userIcon" :user-id="message.userId" :size="40" />
-    <MessageHeader
-      :class="$style.messageHeader"
-      :user-id="message.userId"
-      :created-at="message.createdAt"
-      :updated-at="message.updatedAt"
-    />
+    <span
+      :class="$style.date"
+      :title="message.createdAt !== message.updatedAt ? createdDate : undefined"
+    >{{ date }}</span>
+    <div :class="$style.header">
+      <UserIcon :class="$style.userIcon" :user-id="message.userId" :size="40" />
+      <MessageHeader
+        :class="$style.messageHeader"
+        :user-id="message.userId"
+      />
+    </div>
     <div :class="$style.messageContents">
-      <MarkdownContent v-show="!isEditing" :content="renderedContent" />
+      <MarkdownContent v-show="!isEditing" :content="renderedContent" 
+        :class="$style.markdownContent"
+      />
       <MessageEditor
         v-if="isEditing"
         :raw-content="message.content"
@@ -42,6 +48,10 @@ import { computed } from 'vue'
 import MarkdownContent from '/@/components/UI/MarkdownContent.vue'
 import UserIcon from '/@/components/UI/UserIcon.vue'
 import useEmbeddings from '/@/composables/message/useEmbeddings'
+import {
+  getDateRepresentation,
+  getFullDayWithTimeString
+} from '/@/lib/basic/date'
 import { useMessagesView } from '/@/store/domain/messagesView'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useMessageEditingStateStore } from '/@/store/ui/messageEditingStateStore'
@@ -73,39 +83,50 @@ const renderedContent = computed(
 )
 
 const { embeddingsState } = useEmbeddings(props)
+
+const createdDate = computed(() =>
+  getFullDayWithTimeString(new Date(message.value.createdAt))
+)
+const date = computed(() => getDateRepresentation(message.value.updatedAt))
 </script>
 
 <style lang="scss" module>
 .container {
-  display: grid;
-  grid-template:
-    'user-icon message-header'
-    'user-icon message-contents'
-    '......... message-contents';
-  grid-template-rows: 20px auto 1fr;
-  grid-template-columns: 42px 1fr;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
 }
 
+.date {
+  @include color-ui-secondary;
+  @include size-caption;
+  margin: 0 0 24px 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+}
+
 .userIcon {
-  grid-area: user-icon;
-  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .messageHeader {
-  grid-area: message-header;
   padding-left: 8px;
+  min-width: 0;
 }
 
 .messageContents {
-  grid-area: message-contents;
   padding-top: 4px;
-  padding-left: 8px;
   min-width: 0;
 }
 
 .messageEmbeddingsList {
   margin-top: 16px;
+}
+.markdownContent {
+  margin-top: 32px;
 }
 </style>

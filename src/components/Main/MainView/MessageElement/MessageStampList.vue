@@ -121,7 +121,7 @@ $stamp-row-gap: 0.25rem;
 .stampWrapper {
   position: relative;
   margin-top: 8px;
-  margin-left: 42px;
+  margin-left: 24px;
 }
 
 .toggleButton {

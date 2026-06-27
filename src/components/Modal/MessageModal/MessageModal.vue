@@ -1,7 +1,7 @@
 <template>
   <ClickOutside stop @click-outside="clearModal">
     <div :class="$style.container">
-      <CommonModalHeader :class="$style.header" title="メッセージ" />
+      <CommonModalHeader :class="$style.header" title="Message" />
       <div :class="$style.body">
         <MessageElement
           :class="$style.message"
@@ -38,10 +38,11 @@ const { clearModal } = useModalStore()
 <style lang="scss" module>
 .container {
   @include background-primary;
+  opacity: 0.8;
   display: flex;
   flex-direction: column;
-  width: calc(100% - 32px);
-  max-width: 680px;
+  width: calc(50% - 32px);
+  max-width: 30vw;
   max-height: calc(100% - 64px);
   border: {
     style: solid;
@@ -58,7 +59,8 @@ const { clearModal } = useModalStore()
 
 .body {
   width: 100%;
-  padding: 16px;
+  padding: 16px 0;
+  border-left: 1px solid white;
   overflow: {
     x: hidden;
     y: auto;
@@ -67,6 +69,6 @@ const { clearModal } = useModalStore()
 }
 
 .message {
-  margin: 0 auto;
+  margin: 6px 6px auto 6px;
 }
 </style>

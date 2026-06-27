@@ -163,7 +163,7 @@ const showMessageTools = computed(
 </script>
 
 <style lang="scss" module>
-$messagePadding: 32px;
+$messagePadding: 0;
 $messagePaddingMobile: 16px;
 $messageDebugWidth: 600px;
 $messageMaxHeight: 300px;
@@ -182,8 +182,8 @@ $maskImage: linear-gradient(
   min-width: 0;
   overflow: hidden;
   overflow: clip;
-  margin: 6px auto;
-  border: 1px dashed rgba(255, 96, 160, 0.72);
+  margin: 6px 6px 6px 0;
+  //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 4px;
   padding: 8px $messagePadding;
   &[data-is-mobile] {
