@@ -3,15 +3,16 @@
     v-if="!isDetailOpen"
     large-padding
     clickable
+    :title="`Current Active Viewers: ${viewerIds.length} \n Current Inactive Viewers: ${inactiveViewerIds.length}`"
     @toggle="toggle"
   >
-    <UserIconEllipsisList
+    <!-- <UserIconEllipsisList
       direction="row"
       transition="fade-right"
       :user-ids="viewerIds"
       :inactive-user-ids="inactiveViewerIds"
       @toggle="toggle"
-    />
+    /> -->
   </SidebarContentContainer>
   <ChannelSidebarViewersDetail
     v-else
@@ -25,7 +26,7 @@
 import { onUnmounted } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
+// import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
 import useToggle from '/@/composables/utils/useToggle'
 import type { UserId } from '/@/types/entity-ids'
 
@@ -39,7 +40,8 @@ withDefaults(
     inactiveViewerIds?: readonly UserId[]
   }>(),
   {
-    viewerIds: () => []
+    viewerIds: () => [],
+    inactiveViewerIds: () => []
   }
 )
 

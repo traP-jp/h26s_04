@@ -1,17 +1,16 @@
 <template>
-  <SidebarContentContainer clickable title="閲覧者" @toggle="emit('toggle')">
+  <SidebarContentContainer clickable @toggle="emit('toggle')">
+    <h4>Current Active Viewers: {{ viewerIds.length }}</h4>
     <div v-for="user in viewers" :key="user.id" :class="$style.item">
-      <UserIcon :user-id="user.id" :size="32" />
+      <!-- <UserIcon :user-id="user.id" :size="32" /> -->
       <div :class="$style.userName">
         {{ user.displayName }}
       </div>
     </div>
-    <div
-      v-for="user in inactiveUsers"
-      :key="user.id"
-      :class="[$style.item, $style.transparent]"
-    >
-      <UserIcon :user-id="user.id" :size="32" />
+
+    <h4>Current Inactive Viewers: {{ inactiveViewerIds.length }}</h4>
+    <div v-for="user in inactiveUsers" :key="user.id" :class="[$style.item, $style.transparent]">
+      <!-- <UserIcon :user-id="user.id" :size="32" /> -->
       <div :class="$style.userName">
         {{ user.displayName }}
       </div>
@@ -23,7 +22,7 @@
 import { computed } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import UserIcon from '/@/components/UI/UserIcon.vue'
+// import UserIcon from '/@/components/UI/UserIcon.vue'
 import { isDefined } from '/@/lib/basic/array'
 import { useUsersStore } from '/@/store/entities/users'
 import type { UserId } from '/@/types/entity-ids'
@@ -57,16 +56,20 @@ const inactiveUsers = computed(() =>
   display: flex;
   align-items: center;
   margin: 4px 0;
+
   &:first-child {
     margin-top: 0;
   }
+
   &:last-child {
     margin-bottom: 0;
   }
 }
+
 .transparent {
   opacity: 0.5;
 }
+
 .userName {
   margin-left: 8px;
   font-weight: bold;
