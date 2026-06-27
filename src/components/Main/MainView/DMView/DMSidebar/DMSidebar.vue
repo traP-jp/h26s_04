@@ -51,10 +51,6 @@ defineProps<{
   inactiveViewingUsers: UserId[]
 }>()
 
-const {
-  page,
-  moveToDefaultPage,
-  moveToPinnedPage,
-  moveToEventsPage
-} = useChannelSidebarCommon()
+const { page, moveToDefaultPage, moveToPinnedPage, moveToEventsPage } =
+  useChannelSidebarCommon()
 </script>
