@@ -32,6 +32,7 @@
       >
         <div
           :class="$style.foldContent"
+          :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
           :data-is-message-folded="$boolAttr(isMessageActuallyFolded)"
           @click="openMessageModal"
         >
@@ -117,6 +118,9 @@ const isMessageOversized = computed(
     foldContentHeight.value > MESSAGE_MAX_HEIGHT
 )
 const isMessageActuallyFolded = computed(() => isMessageOversized.value)
+const canOpenMessageModal = computed(
+  () => !props.disableFold && !isEditing.value
+)
 
 const interactiveSelector = [
   'a',
@@ -133,7 +137,7 @@ const isInteractiveTarget = (target: EventTarget | null) =>
 
 const { pushModal } = useModalStore()
 const openMessageModal = (e: MouseEvent) => {
-  if (!isMessageActuallyFolded.value || isInteractiveTarget(e.target)) return
+  if (!canOpenMessageModal.value || isInteractiveTarget(e.target)) return
 
   e.stopPropagation()
   pushModal({
@@ -206,13 +210,16 @@ $maskImage: linear-gradient(
 }
 
 .foldContent {
+  &[data-can-open-message-modal] {
+    cursor: zoom-in;
+  }
+
   &[data-is-message-folded] {
     max-height: $messageMaxHeight;
     overflow: hidden;
     overflow: clip;
     -webkit-mask-image: $maskImage;
     mask-image: $maskImage;
-    cursor: zoom-in;
   }
 }
 
