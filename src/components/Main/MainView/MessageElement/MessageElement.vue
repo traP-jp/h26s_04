@@ -32,7 +32,9 @@
       >
         <div
           :class="$style.foldContent"
+          :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
           :data-is-message-folded="$boolAttr(isMessageActuallyFolded)"
+          @click="openMessageModal"
         >
           <div ref="foldContentInnerRef">
             <MessageContents
@@ -41,16 +43,6 @@
             />
           </div>
         </div>
-        <FoldButton
-          v-if="isMessageOversized"
-          :is-fold="isMessageActuallyFolded"
-          :class="$style.foldButton"
-          :aria-expanded="!isMessageActuallyFolded"
-          background="none"
-          show-icon
-          small
-          @click="toggleMessageFold"
-        />
       </div>
       <MessageStampList
         :show-detail-button="isHovered || isMobile"
@@ -69,13 +61,12 @@ import MessageTools, {
   useMessageToolsHover
 } from '/@/components/Main/MainView/MessageElement/MessageTools.vue'
 import ClickOutside from '/@/components/UI/ClickOutside'
-import FoldButton from '/@/components/UI/FoldButton.vue'
 import useBoxSize from '/@/composables/dom/useBoxSize'
 import useEmbeddings from '/@/composables/message/useEmbeddings'
 import useResponsive from '/@/composables/useResponsive'
-import useToggle from '/@/composables/utils/useToggle'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useMessageEditingStateStore } from '/@/store/ui/messageEditingStateStore'
+import { useModalStore } from '/@/store/ui/modal'
 import type { MessageId, UserId } from '/@/types/entity-ids'
 
 import MessageContents from './MessageContents.vue'
@@ -90,10 +81,12 @@ const props = withDefaults(
     pinnedUserId?: UserId
     isEntryMessage?: boolean
     isArchived?: boolean
+    disableFold?: boolean
   }>(),
   {
     isEntryMessage: false,
-    isArchived: false
+    isArchived: false,
+    disableFold: false
   }
 )
 
@@ -119,18 +112,39 @@ const { embeddingsState } = useEmbeddings(props)
 const { height: foldContentHeight } = useBoxSize(foldContentInnerRef)
 const isMessageOversized = computed(
   () =>
+    !props.disableFold &&
     !isEditing.value &&
     foldContentHeight.value !== undefined &&
     foldContentHeight.value > MESSAGE_MAX_HEIGHT
 )
-const { value: isMessageFolded, toggle: toggleMessageFoldImpl } =
-  useToggle(true)
-const isMessageActuallyFolded = computed(
-  () => isMessageOversized.value && isMessageFolded.value
+const isMessageActuallyFolded = computed(() => isMessageOversized.value)
+const canOpenMessageModal = computed(
+  () => !props.disableFold && !isEditing.value
 )
-const toggleMessageFold = (e: MouseEvent) => {
+
+const interactiveSelector = [
+  'a',
+  'button',
+  'input',
+  'textarea',
+  'select',
+  '[contenteditable="true"]',
+  'audio',
+  'video'
+].join(',')
+const isInteractiveTarget = (target: EventTarget | null) =>
+  target instanceof Element && target.closest(interactiveSelector) !== null
+
+const { pushModal } = useModalStore()
+const openMessageModal = (e: MouseEvent) => {
+  if (!canOpenMessageModal.value || isInteractiveTarget(e.target)) return
+
   e.stopPropagation()
-  toggleMessageFoldImpl()
+  pushModal({
+    type: 'message',
+    messageId: props.messageId,
+    isArchived: props.isArchived
+  })
 }
 
 useElementRenderObserver(
@@ -193,13 +207,13 @@ $maskImage: linear-gradient(
 .foldWrapper {
   position: relative;
   min-width: 0;
-
-  &[data-is-message-oversized]:not([data-is-message-folded]) {
-    padding-bottom: $foldButtonHeight;
-  }
 }
 
 .foldContent {
+  &[data-can-open-message-modal] {
+    cursor: zoom-in;
+  }
+
   &[data-is-message-folded] {
     max-height: $messageMaxHeight;
     overflow: hidden;
@@ -225,22 +239,5 @@ $maskImage: linear-gradient(
   top: 4px;
   right: 16px;
   z-index: $z-index-message-element-tools;
-}
-
-.foldButton {
-  cursor: pointer;
-  position: absolute;
-  left: 50px;
-  bottom: 0;
-  z-index: 1;
-
-  @media (any-hover: hover) {
-    &:hover {
-      @include background-tertiary;
-    }
-  }
-  &:focus-visible {
-    @include background-tertiary;
-  }
 }
 </style>

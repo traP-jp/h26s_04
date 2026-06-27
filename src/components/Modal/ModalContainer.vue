@@ -29,9 +29,12 @@
             : undefined
         "
         :message-id="
-          currentState.type === 'clip-create'
+          currentState.type === 'clip-create' || currentState.type === 'message'
             ? currentState.messageId
             : undefined
+        "
+        :is-archived="
+          currentState.type === 'message' ? currentState.isArchived : undefined
         "
         :group-id="
           currentState.type === 'group-member-edit'
@@ -74,6 +77,7 @@ import GroupCreateModal from './GroupCreateModal/GroupCreateModal.vue'
 import GroupMemberAddModal from './GroupMemberAddModal/GroupMemberAddModal.vue'
 import GroupMemberEditModal from './GroupMemberEditModal/GroupMemberEditModal.vue'
 import GroupModal from './GroupModal/GroupModal.vue'
+import MessageModal from './MessageModal/MessageModal.vue'
 import NotificationModal from './NotificationModal/NotificationModal.vue'
 import ProfileIconEditModal from './ProfileIconEditModal/ProfileIconEditModal.vue'
 import SettingsCacheClearModal from './SettingsCacheClearModal/SettingsCacheClearModal.vue'
@@ -89,6 +93,7 @@ const { shouldShowModal, currentState } = useModalStore()
 const components: Record<ModalStateType, Component> = {
   user: UserModal,
   notification: NotificationModal,
+  message: MessageModal,
   tag: TagModal,
   group: GroupModal,
   'channel-create': ChannelCreateModal,
