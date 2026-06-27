@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <SidebarContentContainer clickable right-align @toggle="emit('toggle')">
+  <div @click="emit('toggle')">
+    <SidebarContentContainer right-align>
       <h4>Current Active Viewers: {{ viewerIds.length }}</h4>
       <div v-for="user in viewers" :key="user.id" :class="$style.item">
         <!-- <UserIcon :user-id="user.id" :size="32" /> -->
