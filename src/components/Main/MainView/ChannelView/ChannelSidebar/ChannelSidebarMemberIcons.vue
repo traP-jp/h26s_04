@@ -36,6 +36,7 @@ withDefaults(
   @include color-ui-secondary;
   display: flex;
   flex-direction: column;
+  background-color: transparent;
 }
 
 .member {

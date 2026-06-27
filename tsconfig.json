@@ -25,7 +25,8 @@
       "webappsec-credential-management"
     ],
     "paths": {
-      "/@/*": ["src/*"]
+      "/@/*": ["src/*"],
+      "vue-slider-component": ["src/types/vue-slider-component.d.ts"]
     },
     "lib": ["esnext", "dom", "dom.iterable"]
   },

@@ -1,5 +1,5 @@
 <template>
-  <SidebarContentContainer title="メンバー">
+  <SidebarContentContainer right-align title="メンバー">
     <EmptyState v-if="isForceNotification"> 強制通知チャンネル </EmptyState>
     <EmptyState v-else-if="!subscribers">
       メンバーの取得に失敗しました
