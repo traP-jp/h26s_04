@@ -1,21 +1,20 @@
 import type { ChannelStats } from '@traptitech/traq'
 
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import useMittListener from '/@/composables/utils/useMittListener'
 import apis from '/@/lib/apis'
-import { wsListener } from '/@/lib/websocket'
-import { messageMitt } from '/@/store/entities/messages'
+import {
+  messageMitt,
+  type StampStatsDiff
+} from '/@/store/entities/messages'
 import type { ChannelId } from '/@/types/entity-ids'
-
-const STAMP_STATS_REFETCH_DELAY_MS = 500
 
 const useChannelStats = (props: { channelId: ChannelId }) => {
   const channelStats = ref<ChannelStats>()
   const isLoading = ref(false)
   const isFailed = ref(false)
   let fetchId = 0
-  let stampStatsRefetchTimeout: ReturnType<typeof setTimeout> | undefined
   let shouldRefetchAfterLoading = false
 
   const fetch = async ({ clear = false } = {}) => {
@@ -58,17 +57,6 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     fetch()
   }
 
-  const requestStampStatsRefetch = () => {
-    if (stampStatsRefetchTimeout !== undefined) {
-      clearTimeout(stampStatsRefetchTimeout)
-    }
-
-    stampStatsRefetchTimeout = setTimeout(() => {
-      stampStatsRefetchTimeout = undefined
-      requestFetch()
-    }, STAMP_STATS_REFETCH_DELAY_MS)
-  }
-
   const updateTotalMessageCount = (getNextCount: (count: number) => number) => {
     if (channelStats.value === undefined) {
       requestFetch()
@@ -78,6 +66,50 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     channelStats.value = {
       ...channelStats.value,
       totalMessageCount: getNextCount(channelStats.value.totalMessageCount)
+    }
+  }
+
+  const updateStampStats = (diffs: readonly StampStatsDiff[]) => {
+    if (channelStats.value === undefined) {
+      requestFetch()
+      return
+    }
+
+    const stamps = [...channelStats.value.stamps]
+
+    for (const { stampId, countDelta, totalDelta } of diffs) {
+      const index = stamps.findIndex(stamp => stamp.id === stampId)
+
+      if (index === -1) {
+        if (countDelta <= 0 && totalDelta <= 0) continue
+
+        stamps.push({
+          id: stampId,
+          count: Math.max(0, countDelta),
+          total: Math.max(0, totalDelta)
+        })
+        continue
+      }
+
+      const currentStamp = stamps[index]
+      if (currentStamp === undefined) continue
+
+      const nextStamp = {
+        ...currentStamp,
+        count: Math.max(0, currentStamp.count + countDelta),
+        total: Math.max(0, currentStamp.total + totalDelta)
+      }
+
+      if (nextStamp.count === 0 && nextStamp.total === 0) {
+        stamps.splice(index, 1)
+      } else {
+        stamps[index] = nextStamp
+      }
+    }
+
+    channelStats.value = {
+      ...channelStats.value,
+      stamps
     }
   }
 
@@ -103,22 +135,19 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
 
     if (channelId !== props.channelId) return
 
-    const shouldRefetchStampStats = channelStats.value !== undefined
     updateTotalMessageCount(count => Math.max(0, count - 1))
-    if (shouldRefetchStampStats) {
-      requestStampStatsRefetch()
-    }
   })
+  useMittListener(
+    messageMitt,
+    'updateMessageStampStats',
+    ({ channelId, diffs }) => {
+      if (channelId !== props.channelId) return
+
+      updateStampStats(diffs)
+    }
+  )
   useMittListener(messageMitt, 'reconnect', () => {
     requestFetch()
-  })
-  useMittListener(wsListener, 'MESSAGE_STAMPED', requestStampStatsRefetch)
-  useMittListener(wsListener, 'MESSAGE_UNSTAMPED', requestStampStatsRefetch)
-
-  onUnmounted(() => {
-    if (stampStatsRefetchTimeout !== undefined) {
-      clearTimeout(stampStatsRefetchTimeout)
-    }
   })
 
   const totalMessageCount = computed(
