@@ -38,9 +38,11 @@ const { clearModal } = useModalStore()
 <style lang="scss" module>
 .container {
   @include background-primary;
-  opacity: 0.8;
-  display: flex;
-  flex-direction: column;
+  opacity: 0.85;
+  display: inline-block;
+  position:absolute;
+  bottom: 0;
+  left:5vw;
   width: calc(50% - 32px);
   max-width: 30vw;
   max-height: calc(100% - 64px);
@@ -59,7 +61,6 @@ const { clearModal } = useModalStore()
 
 .body {
   width: 100%;
-  padding: 16px 0;
   border-left: 1px solid white;
   overflow: {
     x: hidden;
@@ -69,6 +70,6 @@ const { clearModal } = useModalStore()
 }
 
 .message {
-  margin: 6px 6px auto 6px;
+  margin: 6px 0 6px 6px;
 }
 </style>
