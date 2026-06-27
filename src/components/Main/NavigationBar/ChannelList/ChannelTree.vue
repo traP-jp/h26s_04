@@ -55,13 +55,18 @@ const toggleChildren = (channelId: ChannelId) => {
 
 <style lang="scss" module>
 .element {
-  margin: 4px 0;
+  margin: 1px 0;
 }
 
 .tree {
   overflow: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  font-family:
+    'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'SFMono-Regular',
+    'Menlo', 'Consolas', monospace;
+  font-size: 0.92rem;
+  letter-spacing: -0.02em;
 
   &::-webkit-scrollbar {
     display: none;
@@ -69,6 +74,6 @@ const toggleChildren = (channelId: ChannelId) => {
 }
 
 .children {
-  margin-left: 12px;
+  margin-left: 8px;
 }
 </style>

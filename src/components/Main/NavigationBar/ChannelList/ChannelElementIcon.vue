@@ -22,14 +22,23 @@
       :data-has-notification-on-child="$boolAttr(hasNotificationOnChild)"
       :data-is-inactive="$boolAttr(isInactive)"
     >
+      <span
+        v-if="iconName === 'hash'"
+        :class="$style.channelDot"
+        :data-has-notification="$boolAttr(hasNotification)"
+      />
       <AIcon
+        v-if="iconName !== 'hash'"
         :name="iconName"
         :class="$style.icon"
         :mdi="$props.isIconMdi"
         :size="iconSize"
       />
     </div>
-    <div v-if="hasNotification" :class="$style.indicator">
+    <div
+      v-if="hasNotification && iconName !== 'hash'"
+      :class="$style.indicator"
+    >
       <NotificationIndicator :border-width="2" />
     </div>
   </component>
@@ -88,12 +97,27 @@ const onIconHoveredLeave = () => {
 
 <style lang="scss" module>
 .container {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
+  font: inherit;
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
+
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible .channelIconWrapper {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+  }
 }
 .channelIconWrapper {
   border: {
@@ -101,13 +125,13 @@ const onIconHoveredLeave = () => {
     style: solid;
     color: transparent;
   }
-  border-radius: 4px;
-  width: 22px;
-  height: 22px;
+  border-radius: 3px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: content-box;
+  box-sizing: border-box;
   cursor: pointer;
   position: relative;
 
@@ -122,68 +146,47 @@ const onIconHoveredLeave = () => {
     }
   }
   &[data-container-type='parent'] {
-    &:hover::before,
-    .container:focus &::before {
-      content: '';
-      border-radius: 4px;
-      display: block;
-      position: absolute;
-      top: -4px;
-      bottom: -4px;
-      left: -4px;
-      right: -4px;
-    }
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+
     &[data-is-opened] {
       color: var(--specific-channel-hash-opened);
       background: $theme-ui-primary-background;
-      &:hover::before,
-      .container:focus &::before {
-        background: $theme-ui-primary-background;
-        opacity: 0.5;
-      }
       &[data-is-inactive] {
         background: $theme-ui-secondary-background;
-        &:hover::before,
-        .container:focus &::before {
-          background: $theme-ui-secondary-background;
-        }
       }
       &[data-is-selected] {
         @include background-accent-primary;
-        &:hover::before,
-        .container:focus &::before {
-          @include background-accent-primary;
-        }
       }
     }
     &:not([data-is-opened]) {
       @include color-ui-primary;
       border-color: $theme-ui-primary-default;
-      &:hover::before,
-      .container:focus &::before {
+      &:hover,
+      .container:focus-visible & {
         background: $theme-ui-primary-background;
-        opacity: 0.2;
       }
       &[data-is-inactive] {
         @include color-ui-secondary;
         border-color: $theme-ui-secondary-default;
-        &:hover::before,
-        .container:focus &::before {
+        &:hover,
+        .container:focus-visible & {
           background: $theme-ui-secondary-background;
         }
       }
       &[data-has-notification-on-child] {
         border-color: $theme-accent-notification-default;
-        &:hover::before,
-        .container:focus &::before {
+        &:hover,
+        .container:focus-visible & {
           background: $theme-accent-notification-background;
         }
       }
       &[data-is-selected] {
         @include color-accent-primary;
         border-color: $theme-accent-primary-default;
-        &:hover::before,
-        .container:focus &::before {
+        &:hover,
+        .container:focus-visible & {
           @include background-accent-primary;
         }
       }
@@ -192,10 +195,31 @@ const onIconHoveredLeave = () => {
 }
 .indicator {
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 0;
+  right: 0;
+}
+.channelDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  // opacity: 1;
+  flex-shrink: 0;
+  transition:
+    background-color 0.12s ease,
+    opacity 0.12s ease,
+    transform 0.12s ease;
+
+  &[data-has-notification] {
+    background: $theme-accent-notification-default;
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  .channelIconWrapper[data-is-inactive] &:not([data-has-notification]) {
+    opacity: 0.28;
+  }
 }
 .icon {
-  margin-left: 0.5px;
+  margin-left: 0;
 }
 </style>
