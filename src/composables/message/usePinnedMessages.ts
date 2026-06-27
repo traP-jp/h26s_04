@@ -51,7 +51,7 @@ const usePinnedMessages = (channelId: Ref<ChannelId>) => {
     if (channelId.value !== message.channelId) return
     updatePinnedMessage(message)
   })
-  useMittListener(messageMitt, 'deleteMessage', messageId => {
+  useMittListener(messageMitt, 'deleteMessage', ({ messageId }) => {
     removePinnedMessage(messageId)
   })
   useMittListener(messageMitt, 'pinMessage', async message => {

@@ -119,7 +119,7 @@ const useActivityStream = () => {
 
     timeline.value[sameMessageIndex] = updatedMessage
   })
-  useMittListener(messageMitt, 'deleteMessage', deletedMessageId => {
+  useMittListener(messageMitt, 'deleteMessage', ({ messageId: deletedMessageId }) => {
     const deletedMessage = timeline.value.find(
       ({ id }) => id === deletedMessageId
     )
