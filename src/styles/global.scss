@@ -10,6 +10,22 @@
 @forward 'transition';
 @forward 'scrollbar';
 
+@font-face {
+  font-family: 'Monaspace Neon';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/monaspace/MonaspaceNeon-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Monaspace Neon';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/monaspace/MonaspaceNeon-Bold.woff2') format('woff2');
+}
+
 :root {
   color-scheme: var(--color-scheme);
   caret-color: var(--caret);
