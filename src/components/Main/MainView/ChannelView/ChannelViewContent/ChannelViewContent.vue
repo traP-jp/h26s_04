@@ -118,7 +118,8 @@ const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(
   flex-direction: row;
   position: relative;
   height: 100%;
-  background: var(--specific-main-view-background);
+  // 背景を透明にして、後ろの星空（StarfieldScene）が透けて見えるようにする
+  background: transparent;
 }
 
 .fileUploadOverlay {
