@@ -1,28 +1,12 @@
 <template>
 	<div :class="$style.stats">
-		<span>Current Active Viewers: {{ viewerIds.length }}</span><br>
-		<!-- <div v-for="user in viewers" :key="user.id">
-      <div>
-              {{ user.displayName }}
-      </div>
-    </div> -->
-    <span>Current Inactive Viewers: {{ inactiveViewerIds.length }}</span>
-    <!-- <div
-      v-for="user in inactiveUsers"
-      :key="user.id"
-    >
-      <div>
-        {{ user.displayName }}
-      </div>
-    </div> -->
+    <span>Current Active Viewers: {{ props.viewerIds.length }}</span><br>
+      <span>Current Inactive Viewers: {{ props.inactiveViewerIds.length }}</span>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { UserId } from '/@/types/entity-ids';
-import { useUsersStore } from '/@/store/entities/users';
-import { isDefined } from '@vueuse/core';
 
 const props = withDefaults(
   defineProps<{
@@ -35,13 +19,6 @@ const props = withDefaults(
   }
 )
 
-const { usersMap } = useUsersStore()
-const viewers = computed(() =>
-  props.viewerIds.map((id) => usersMap.value.get(id)).filter(isDefined)
-)
-const inactiveUsers = computed(() =>
-  props.inactiveViewerIds.map((id) => usersMap.value.get(id)).filter(isDefined)
-)
 </script>
 
 <style lang="scss" module>
