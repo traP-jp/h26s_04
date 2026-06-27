@@ -9,12 +9,13 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useSkyCamera } from '/@/composables/useSkyCamera'
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-const { camTheta, camPhi, targetFov, tick } = useSkyCamera()
+const { camPosition, targetFov, tick } = useSkyCamera()
 
 const STAR_COUNT = 4000
 const STAR_RADIUS = 1000
-const CAM_RADIUS = 15
 
+// 実際の恒星の色温度分布に近づけた重み付きパレット
+// w が大きいほど出現頻度が高い（青白・白が多く、赤が少ない）
 const PALETTE = [
   { hex: 0x9db4ff, w: 8 },
   { hex: 0xaabfff, w: 11 },
@@ -33,6 +34,8 @@ const prefersReduced = window.matchMedia(
   '(prefers-reduced-motion: reduce)'
 ).matches
 
+// onUnmounted は setup 時にしか登録できないため、onMounted 内で生成したリソースの
+// クリーンアップ関数をここに格納して onUnmounted から呼び出す
 let cleanupFn: (() => void) | null = null
 
 onMounted(() => {
@@ -72,6 +75,7 @@ onMounted(() => {
     const u = Math.random()
     const v = Math.random()
     const theta = 2 * Math.PI * u
+    // acos(2v-1) により球面上に一様分布させる（naive な theta/phi だと極に偏る）
     const phi = Math.acos(2 * v - 1)
     const sinPhi = Math.sin(phi)
     positions[i * 3] = STAR_RADIUS * sinPhi * Math.cos(theta)
@@ -101,6 +105,7 @@ onMounted(() => {
   const uniforms = {
     uTime: { value: 0 },
     uPixelRatio: { value: pixelRatio },
+    // prefers-reduced-motion 時は 0 にしてまたたきを停止する
     uTwinkle: { value: prefersReduced ? 0.0 : 1.0 },
   }
 
@@ -141,6 +146,7 @@ onMounted(() => {
     transparent: true,
     depthWrite: false,
     depthTest: false,
+    // 加算合成により重なった星が明るく光る発光表現になる
     blending: THREE.AdditiveBlending,
   })
 
@@ -156,12 +162,7 @@ onMounted(() => {
 
     tick()
 
-    const sp = Math.sin(camPhi.value)
-    camera.position.set(
-      CAM_RADIUS * sp * Math.cos(camTheta.value),
-      CAM_RADIUS * Math.cos(camPhi.value),
-      CAM_RADIUS * sp * Math.sin(camTheta.value)
-    )
+    camera.position.copy(camPosition.value)
     camera.lookAt(0, 0, 0)
 
     if (Math.abs(camera.fov - targetFov.value) > 0.01) {
@@ -201,6 +202,7 @@ onUnmounted(() => {
 
 <style lang="scss" module>
 .canvas {
+  /* position: fixed でビューポート全体を覆い、親要素のレイアウトに依存しない */
   position: fixed;
   inset: 0;
   pointer-events: none;
