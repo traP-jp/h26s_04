@@ -4,10 +4,7 @@ import { computed, ref, watch } from 'vue'
 
 import useMittListener from '/@/composables/utils/useMittListener'
 import apis from '/@/lib/apis'
-import {
-  messageMitt,
-  type StampStatsDiff
-} from '/@/store/entities/messages'
+import { type StampStatsDiff, messageMitt } from '/@/store/entities/messages'
 import type { ChannelId } from '/@/types/entity-ids'
 
 const useChannelStats = (props: { channelId: ChannelId }) => {
