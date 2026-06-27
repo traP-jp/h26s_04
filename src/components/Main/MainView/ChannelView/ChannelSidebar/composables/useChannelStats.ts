@@ -1,17 +1,21 @@
 import type { ChannelStats } from '@traptitech/traq'
 
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 
 import useMittListener from '/@/composables/utils/useMittListener'
 import apis from '/@/lib/apis'
+import { wsListener } from '/@/lib/websocket'
 import { messageMitt } from '/@/store/entities/messages'
 import type { ChannelId } from '/@/types/entity-ids'
+
+const STAMP_STATS_REFETCH_DELAY_MS = 500
 
 const useChannelStats = (props: { channelId: ChannelId }) => {
   const channelStats = ref<ChannelStats>()
   const isLoading = ref(false)
   const isFailed = ref(false)
   let fetchId = 0
+  let stampStatsRefetchTimeout: ReturnType<typeof setTimeout> | undefined
 
   const fetch = async ({ clear = false } = {}) => {
     const currentFetchId = ++fetchId
@@ -38,6 +42,17 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
         isLoading.value = false
       }
     }
+  }
+
+  const requestStampStatsRefetch = () => {
+    if (stampStatsRefetchTimeout !== undefined) {
+      clearTimeout(stampStatsRefetchTimeout)
+    }
+
+    stampStatsRefetchTimeout = setTimeout(() => {
+      stampStatsRefetchTimeout = undefined
+      fetch()
+    }, STAMP_STATS_REFETCH_DELAY_MS)
   }
 
   const updateTotalMessageCount = (getNextCount: (count: number) => number) => {
@@ -79,6 +94,14 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
   })
   useMittListener(messageMitt, 'reconnect', () => {
     fetch()
+  })
+  useMittListener(wsListener, 'MESSAGE_STAMPED', requestStampStatsRefetch)
+  useMittListener(wsListener, 'MESSAGE_UNSTAMPED', requestStampStatsRefetch)
+
+  onUnmounted(() => {
+    if (stampStatsRefetchTimeout !== undefined) {
+      clearTimeout(stampStatsRefetchTimeout)
+    }
   })
 
   const totalMessageCount = computed(
