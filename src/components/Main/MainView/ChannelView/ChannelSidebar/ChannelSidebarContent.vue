@@ -6,12 +6,6 @@
       :inactive-viewer-ids="inactiveViewerIds"
       :class="$style.sidebarItem"
     />
-    <ChannelSidebarQall
-      v-if="qallUserIds.length > 0"
-      :qall-user-ids="qallUserIds"
-      :class="$style.sidebarItem"
-    />
-    <ChannelSidebarTopic :class="$style.sidebarItem" :channel-id="channelId" />
     <ChannelSidebarMessageCount
       :total-message-count="totalMessageCount"
       :is-loading="isLoading"
@@ -24,46 +18,22 @@
       :is-failed="isFailed"
       :class="$style.sidebarItem"
     />
-    <ChannelSidebarPinned
-      :pinned-message-length="pinnedMessagesCount"
-      :class="$style.sidebarItem"
-      @click-link="emit('moveToPinned')"
-    />
-    <ChannelSidebarEvents
-      :class="$style.sidebarItem"
-      @click-link="emit('moveToEvents')"
-    />
-    <ChannelSidebarRelation
-      :channel-id="channelId"
-      :class="$style.sidebarItem"
-    />
     <ChannelSidebarMember
       :channel-id="channelId"
       :class="$style.sidebarItem"
       :viewer-ids="viewerIds"
     />
     <ChannelSidebarBots :channel-id="channelId" :class="$style.sidebarItem" />
-    <!--
-    <channel-sidebar-edit :class="$style.edit" />
-    -->
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
-
-import { useQall } from '/@/composables/qall/useQall'
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarBots from './ChannelSidebarBots.vue'
-import ChannelSidebarEvents from './ChannelSidebarEvents.vue'
 import ChannelSidebarMember from './ChannelSidebarMember.vue'
 import ChannelSidebarMessageCount from './ChannelSidebarMessageCount.vue'
-import ChannelSidebarPinned from './ChannelSidebarPinned.vue'
-import ChannelSidebarQall from './ChannelSidebarQall.vue'
-import ChannelSidebarRelation from './ChannelSidebarRelation.vue'
 import ChannelSidebarStampStats from './ChannelSidebarStampStats.vue'
-import ChannelSidebarTopic from './ChannelSidebarTopic.vue'
 import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
 import useChannelStats from './composables/useChannelStats'
 
@@ -71,33 +41,15 @@ const isViewersDetailOpen = defineModel<boolean>('isViewersDetailOpen', {
   required: true
 })
 
-const props = withDefaults(
-  defineProps<{
-    channelId: ChannelId
-    viewerIds: readonly UserId[]
-    inactiveViewerIds: readonly UserId[]
-    pinnedMessagesCount?: number
-  }>(),
-  {
-    pinnedMessagesCount: 0
-  }
-)
-
-const emit = defineEmits<{
-  (e: 'moveToPinned'): void
-  (e: 'moveToEvents'): void
+const props = defineProps<{
+  channelId: ChannelId
+  viewerIds: readonly UserId[]
+  inactiveViewerIds: readonly UserId[]
+  pinnedMessagesCount?: number
 }>()
 
-const { rooms: roomWithParticipants } = useQall()
 const { totalMessageCount, stampStats, isLoading, isFailed } =
   useChannelStats(props)
-
-const qallUserIds = computed(
-  () =>
-    roomWithParticipants.value
-      .find(room => room.channel.id === props.channelId)
-      ?.participants?.map(participant => participant.user.id) ?? []
-)
 </script>
 
 <style lang="scss" module>
@@ -109,6 +61,7 @@ const qallUserIds = computed(
   &:last-child {
     margin-bottom: 0;
   }
+  background: transparent;
 }
 
 .edit {
