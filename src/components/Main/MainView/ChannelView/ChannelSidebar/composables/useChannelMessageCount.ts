@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { ref, watch } from 'vue'
 
+import useMittListener from '/@/composables/utils/useMittListener'
 import { BASE_PATH } from '/@/lib/apis'
+import { messageMitt } from '/@/store/entities/messages'
 import type { ChannelId } from '/@/types/entity-ids'
 
 type ChannelStats = {
@@ -58,6 +60,18 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
     },
     { immediate: true }
   )
+
+  useMittListener(messageMitt, 'addMessage', ({ message }) => {
+    if (message.channelId !== props.channelId) return
+
+    if (totalMessageCount.value === undefined) {
+      fetch()
+      return
+    }
+
+    totalMessageCount.value++
+  })
+  useMittListener(messageMitt, 'reconnect', fetch)
 
   return {
     totalMessageCount,
