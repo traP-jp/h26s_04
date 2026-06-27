@@ -3,6 +3,7 @@
     v-if="!isDetailOpen"
     large-padding
     clickable
+    right-align
     :title="`Current Active Viewers: ${viewerIds.length} \n Current Inactive Viewers: ${inactiveViewerIds.length}`"
     @toggle="toggle"
   >

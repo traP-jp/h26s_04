@@ -1,21 +1,23 @@
 <template>
-  <SidebarContentContainer clickable @toggle="emit('toggle')">
-    <h4>Current Active Viewers: {{ viewerIds.length }}</h4>
-    <div v-for="user in viewers" :key="user.id" :class="$style.item">
-      <!-- <UserIcon :user-id="user.id" :size="32" /> -->
-      <div :class="$style.userName">
-        {{ user.displayName }}
+  <div>
+    <SidebarContentContainer clickable right-align @toggle="emit('toggle')">
+      <h4>Current Active Viewers: {{ viewerIds.length }}</h4>
+      <div v-for="user in viewers" :key="user.id" :class="$style.item">
+        <!-- <UserIcon :user-id="user.id" :size="32" /> -->
+        <div :class="$style.userName">
+          {{ user.displayName }}
+        </div>
       </div>
-    </div>
-
-    <h4>Current Inactive Viewers: {{ inactiveViewerIds.length }}</h4>
-    <div v-for="user in inactiveUsers" :key="user.id" :class="[$style.item, $style.transparent]">
-      <!-- <UserIcon :user-id="user.id" :size="32" /> -->
-      <div :class="$style.userName">
-        {{ user.displayName }}
+  
+      <h4>Current Inactive Viewers: {{ inactiveViewerIds.length }}</h4>
+      <div v-for="user in inactiveUsers" :key="user.id" :class="[$style.item, $style.transparent]">
+        <!-- <UserIcon :user-id="user.id" :size="32" /> -->
+        <div :class="$style.userName">
+          {{ user.displayName }}
+        </div>
       </div>
-    </div>
-  </SidebarContentContainer>
+    </SidebarContentContainer>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -76,5 +78,9 @@ const inactiveUsers = computed(() =>
   word-break: normal;
   overflow-wrap: break-word; // for Safari
   overflow-wrap: anywhere;
+}
+
+.rightAlign {
+  justify-content: flex-end;
 }
 </style>
