@@ -6,9 +6,9 @@
     @toggle="toggle"
   >
     <SlideDown :is-open="isOpen">
-      <EmptyState v-if="isForceNotification">
-        Force Notification Channel
-      </EmptyState>
+      <div v-if="isForceNotification" :class="$style.members">
+        <div :class="$style.member">Force Notification</div>
+      </div>
       <div v-else-if="members.length > 0" :class="$style.members">
         <div
           v-for="member in members"
@@ -18,7 +18,9 @@
           {{ member.name }}
         </div>
       </div>
-      <EmptyState v-else> No Subscribers </EmptyState>
+      <div v-else :class="$style.members">
+        <div :class="$style.member">No Subscribers</div>
+      </div>
     </SlideDown>
   </SidebarContentContainer>
 </template>
@@ -27,7 +29,6 @@
 import { computed } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import EmptyState from '/@/components/UI/EmptyState.vue'
 import SlideDown from '/@/components/UI/SlideDown.vue'
 import useChannelSubscribers from '/@/composables/subscription/useChannelSubscribers'
 import useToggle from '/@/composables/utils/useToggle'
