@@ -17,11 +17,16 @@ const useFetchLimit = (
     false
   )
 
-  const fetchLimit = computed(() =>
-    Math.min(Math.ceil((height.value ?? 0) / messageHeight), MAX_COUNT)
-  )
+  const fetchLimit = computed(() => {
+    if (height.value === undefined) return MAX_COUNT
+    return Math.min(Math.ceil(height.value / messageHeight), MAX_COUNT)
+  })
 
   const waitHeightResolved = new Promise<void>(resolve => {
+    if (unrefElement(scrollerRef) === undefined) {
+      resolve()
+      return
+    }
     const stop = watch(
       height,
       newHeight => {
