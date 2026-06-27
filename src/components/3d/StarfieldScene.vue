@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { onUnmounted } from 'vue'
 
-import { useLoop } from '@tresjs/core'
 import * as THREE from 'three'
+import { useLoop } from '@tresjs/core'
 
 const STAR_COUNT = 4000
 const STAR_RADIUS = 1000

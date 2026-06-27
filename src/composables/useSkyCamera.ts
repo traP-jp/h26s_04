@@ -59,7 +59,7 @@ const _useSkyCamera = () => {
   const onPointerDown = (e: PointerEvent) => {
     // setPointerCapture によりポインターが要素外に出ても pointermove/pointerup を受け取り続ける
     // window へのリスナー登録が不要になる
-    ; (e.currentTarget as Element).setPointerCapture(e.pointerId)
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
     dragging.value = true
     lastX = e.clientX
     lastY = e.clientY
