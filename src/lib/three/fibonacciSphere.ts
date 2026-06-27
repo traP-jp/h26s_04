@@ -1,6 +1,7 @@
 import { Vector3 } from 'three'
 
-function fibonacciSphere(n: number): Vector3[] {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const fibonacciSphere = (n: number) => {
   const points: Vector3[] = []
   const goldenAngle = Math.PI * (3 - Math.sqrt(5)) // 黄金角（ラジアン）
 
