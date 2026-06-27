@@ -35,7 +35,7 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
     isFailed.value = false
 
     try {
-      const { data } = await fetchChannelStats(props.channelId, false)
+      const { data } = await fetchChannelStats(props.channelId, true)
       if (currentFetchId !== fetchId) return
 
       totalMessageCount.value = data.totalMessageCount
@@ -70,6 +70,16 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
     }
 
     totalMessageCount.value++
+  })
+  useMittListener(messageMitt, 'deleteMessage', ({ channelId }) => {
+    if (channelId !== props.channelId) return
+
+    if (totalMessageCount.value === undefined) {
+      fetch()
+      return
+    }
+
+    totalMessageCount.value = Math.max(0, totalMessageCount.value - 1)
   })
   useMittListener(messageMitt, 'reconnect', fetch)
 
