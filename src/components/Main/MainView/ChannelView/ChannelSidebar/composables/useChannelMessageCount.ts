@@ -29,8 +29,11 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
   const isFailed = ref(false)
   let fetchId = 0
 
-  const fetch = async () => {
+  const fetch = async ({ clear = false } = {}) => {
     const currentFetchId = ++fetchId
+    if (clear) {
+      totalMessageCount.value = undefined
+    }
     isLoading.value = true
     isFailed.value = false
 
@@ -56,7 +59,7 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
   watch(
     () => props.channelId,
     () => {
-      fetch()
+      fetch({ clear: true })
     },
     { immediate: true }
   )
@@ -81,13 +84,14 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
 
     totalMessageCount.value = Math.max(0, totalMessageCount.value - 1)
   })
-  useMittListener(messageMitt, 'reconnect', fetch)
+  useMittListener(messageMitt, 'reconnect', () => {
+    fetch()
+  })
 
   return {
     totalMessageCount,
     isLoading,
-    isFailed,
-    fetch
+    isFailed
   }
 }
 
