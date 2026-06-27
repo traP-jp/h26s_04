@@ -71,10 +71,12 @@ const _useSkyCamera = () => {
     const dy = e.clientY - lastY
     lastX = e.clientX
     lastY = e.clientY
-    camTheta.value -= dx * DRAG_SPEED
-    camPhi.value = clampPhi(camPhi.value + dy * DRAG_SPEED)
-    velTheta.value = -dx * DRAG_SPEED
-    velPhi.value = dy * DRAG_SPEED
+    // 「球をつかんで回す」感覚にするため、ドラッグ方向と同じ向きに見かけが動くよう符号を取る
+    // （カメラを動かす向きとしては逆。ドラッグ右→球の手前面が右へ）
+    camTheta.value += dx * DRAG_SPEED
+    camPhi.value = clampPhi(camPhi.value - dy * DRAG_SPEED)
+    velTheta.value = dx * DRAG_SPEED
+    velPhi.value = -dy * DRAG_SPEED
   }
 
   const onPointerUp = () => {
