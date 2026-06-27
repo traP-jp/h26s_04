@@ -31,17 +31,12 @@ const isViewersDetailOpen = defineModel<boolean>('isViewersDetailOpen', {
   required: true
 })
 
-const props = withDefaults(
-  defineProps<{
-    channelId: ChannelId
-    viewerIds: readonly UserId[]
-    inactiveViewerIds: readonly UserId[]
-    pinnedMessagesCount?: number
-  }>(),
-  {
-    pinnedMessagesCount: 0
-  }
-)
+defineProps<{
+  channelId: ChannelId
+  viewerIds: readonly UserId[]
+  inactiveViewerIds: readonly UserId[]
+  pinnedMessagesCount?: number
+}>()
 </script>
 
 <style lang="scss" module>

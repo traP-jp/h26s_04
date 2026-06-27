@@ -19,7 +19,6 @@
 
 <script lang="ts" setup>
 import AIcon from '/@/components/UI/AIcon.vue'
-import useSidebar from '/@/composables/mainView/useSidebar'
 
 withDefaults(
   defineProps<{
@@ -33,8 +32,6 @@ withDefaults(
 const emit = defineEmits<{
   (e: 'back'): void
 }>()
-
-const { closeSidebar } = useSidebar()
 </script>
 
 <style lang="scss" module>

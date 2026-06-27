@@ -12,8 +12,6 @@
             :viewer-ids="activeViewingUsers"
             :inactive-viewer-ids="inactiveViewingUsers"
             :pinned-messages-count="pinnedMessages.length"
-            @move-to-pinned="moveToPinnedPage"
-            @move-to-events="moveToEventsPage"
           />
         </template>
       </PrimaryViewSidebarPage>
@@ -30,6 +28,7 @@
     </template>
     <template #opener>
       <ChannelSidebarHidden
+        :channel-id="channelId"
         :viewer-ids="activeViewingUsers"
         :inactive-viewer-ids="inactiveViewingUsers"
         @open="openSidebar"
@@ -66,13 +65,7 @@ const props = defineProps<{
 }>()
 
 const { channelsMap } = useChannelsStore()
-const {
-  page,
-  moveToDefaultPage,
-  moveToPinnedPage,
-  moveToEventsPage,
-  openSidebar
-} = useChannelSidebarCommon()
+const { page, moveToDefaultPage, openSidebar } = useChannelSidebarCommon()
 
 const channelName = computed(
   () => channelsMap.value.get(props.channelId)?.name ?? ''

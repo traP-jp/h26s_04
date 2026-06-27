@@ -28,6 +28,7 @@
     </template>
     <template #opener>
       <ChannelSidebarHidden
+        :channel-id="channelId"
         :viewer-ids="activeViewingUsers"
         :inactive-viewer-ids="inactiveViewingUsers"
         @open="openSidebar"
