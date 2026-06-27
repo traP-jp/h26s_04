@@ -8,9 +8,13 @@
           {{ user.displayName }}
         </div>
       </div>
-  
+
       <h4>Current Inactive Viewers: {{ inactiveViewerIds.length }}</h4>
-      <div v-for="user in inactiveUsers" :key="user.id" :class="[$style.item, $style.transparent]">
+      <div
+        v-for="user in inactiveUsers"
+        :key="user.id"
+        :class="[$style.item, $style.transparent]"
+      >
         <!-- <UserIcon :user-id="user.id" :size="32" /> -->
         <div :class="$style.userName">
           {{ user.displayName }}

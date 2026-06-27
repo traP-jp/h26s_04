@@ -11,7 +11,12 @@
       :data-is-clickable="$boolAttr(titleClickable)"
       @click="emit('toggle')"
     >
-      <h2 :class="[$style.headerTitle, rightAlign && $style.headerTitleRightAlign]">
+      <h2
+        :class="[
+          $style.headerTitle,
+          rightAlign && $style.headerTitleRightAlign
+        ]"
+      >
         {{ title }}
       </h2>
       <slot name="header-control" />

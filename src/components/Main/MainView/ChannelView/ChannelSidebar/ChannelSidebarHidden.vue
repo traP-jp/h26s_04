@@ -19,15 +19,19 @@
         @count-click="emit('openViewers')"
       />
     </div>
-    <ChannelSidebarHiddenCurrentViewers :viewer-ids="viewerIds" :inactive-viewer-ids="inactiveViewerIds"/>
-  </div> 
+    <ChannelSidebarHiddenCurrentViewers
+      :viewer-ids="viewerIds"
+      :inactive-viewer-ids="inactiveViewerIds"
+    />
+  </div>
 </template>
 
 <script lang="ts" setup>
 import AIcon from '/@/components/UI/AIcon.vue'
 import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
 import type { UserId } from '/@/types/entity-ids'
-import ChannelSidebarHiddenCurrentViewers from './ChannelSidebarHiddenCurrentViewers.vue';
+
+import ChannelSidebarHiddenCurrentViewers from './ChannelSidebarHiddenCurrentViewers.vue'
 
 withDefaults(
   defineProps<{
