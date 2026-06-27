@@ -12,6 +12,7 @@
       ref="listEle"
       :class="$style.stampList"
       :data-show-details="$boolAttr(isDetailShown)"
+      :data-is-overflowing="$boolAttr(isStampListOverflowing)"
     >
       <transition-group name="stamp">
         <div v-for="stamp in stampList" :key="stamp.id" :class="$style.stamp">
@@ -37,15 +38,23 @@
         <AIcon mdi name="plus" :size="20" />
       </div>
     </div>
+    <span
+      v-if="isStampListOverflowing"
+      :class="$style.ellipsis"
+      aria-hidden="true"
+    >
+      …
+    </span>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { MessageStamp } from '@traptitech/traq'
 
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import AIcon from '/@/components/UI/AIcon.vue'
+import useBoxSize from '/@/composables/dom/useBoxSize'
 import useToggle from '/@/composables/utils/useToggle'
 import { createStampList } from '/@/lib/messageStampList'
 import { useStampUpdater } from '/@/lib/updater/stamp'
@@ -80,7 +89,23 @@ const addStamp = (stampId: StampId) =>
 const removeStamp = (stampId: StampId) =>
   removeStampOptimistically(props.messageId, stampId)
 
-const listEle = ref<HTMLDivElement>()
+const listEle = ref<HTMLDivElement | null>(null)
+const isStampListOverflowing = ref(false)
+const { width: stampListWidth } = useBoxSize(listEle)
+const updateStampListOverflowing = async () => {
+  await nextTick()
+  const element = listEle.value
+  isStampListOverflowing.value =
+    !isDetailShown.value &&
+    element !== null &&
+    element.scrollHeight > element.clientHeight + 1
+}
+watch(
+  [stampList, isDetailShown, stampListWidth, () => props.isArchived],
+  updateStampListOverflowing,
+  { immediate: true, flush: 'post' }
+)
+
 const { toggleStampPicker } = useStampPickerInvoker(
   async stampData => addStampOptimistically(props.messageId, stampData.id),
   listEle,
@@ -90,6 +115,9 @@ const { toggleStampPicker } = useStampPickerInvoker(
 </script>
 
 <style lang="scss" module>
+$stamp-height: 1.5rem;
+$stamp-row-gap: 0.25rem;
+
 .stampWrapper {
   position: relative;
   margin-top: 8px;
@@ -114,8 +142,16 @@ const { toggleStampPicker } = useStampPickerInvoker(
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  max-height: calc($stamp-height + $stamp-row-gap);
+  overflow: hidden;
+  overflow: clip;
+  &[data-is-overflowing]:not([data-show-details]) {
+    padding-right: 1.25rem;
+  }
   &[data-show-details] {
     flex-direction: column;
+    max-height: unset;
+    overflow: visible;
   }
   contain: content;
 }
@@ -139,5 +175,23 @@ const { toggleStampPicker } = useStampPickerInvoker(
   border-radius: 4px;
   color: var(--specific-stamp-picker-opener-border);
   cursor: pointer;
+}
+
+.ellipsis {
+  @include color-ui-secondary;
+  @include size-body2;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: $stamp-height;
+  width: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-weight: bold;
+  pointer-events: none;
+  text-shadow:
+    0 0 2px $theme-background-primary-default,
+    0 0 4px $theme-background-primary-default;
 }
 </style>
