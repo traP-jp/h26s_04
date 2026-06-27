@@ -40,13 +40,13 @@ const { clearModal } = useModalStore()
   @include background-primary;
   opacity: 0.85;
   display: inline-block;
-  position:absolute;
+  position: absolute;
   bottom: 0;
-  left:5vw;
+  left: 5vw;
   width: calc(50% - 32px);
   max-width: 30vw;
   //max-height: calc(100% - 64px);
-  height:60vh;
+  height: 60vh;
   border: {
     style: solid;
     width: 2px;

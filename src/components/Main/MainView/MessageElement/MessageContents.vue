@@ -3,13 +3,11 @@
     <span
       :class="$style.date"
       :title="message.createdAt !== message.updatedAt ? createdDate : undefined"
-    >{{ date }}</span>
+      >{{ date }}</span
+    >
     <div :class="$style.header">
       <UserIcon :class="$style.userIcon" :user-id="message.userId" :size="40" />
-      <MessageHeader
-        :class="$style.messageHeader"
-        :user-id="message.userId"
-      />
+      <MessageHeader :class="$style.messageHeader" :user-id="message.userId" />
     </div>
     <div :class="$style.messageContents">
       <MarkdownContent
