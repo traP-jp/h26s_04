@@ -47,7 +47,7 @@ const props = withDefaults(
 )
 
 const { channelsMap } = useChannelsStore()
-const { activeUsersMap } = useUsersStore()
+const { usersMap } = useUsersStore()
 
 const subscribers = useChannelSubscribers(props)
 const { value: isOpen, toggle } = useToggle(false)
@@ -58,7 +58,7 @@ const isForceNotification = computed(
 const title = computed(() => `Subscribers: ${subscribers.value.size}`)
 const members = computed(() =>
   [...subscribers.value]
-    .map(id => activeUsersMap.value.get(id))
+    .map(id => usersMap.value.get(id))
     .filter(isDefined)
     .map(user => ({ ...user, inactive: !props.viewerIds.includes(user.id) }))
     .sort((a, b) => {
