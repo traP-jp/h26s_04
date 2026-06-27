@@ -1,9 +1,10 @@
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 
 import * as THREE from 'three'
 import { createSharedComposable } from '@vueuse/core'
 
-// 天球の中心からカメラまでの距離。StarfieldBackground・MessageSphere で共用する
+// 天球の中心からカメラまでの距離（MainView 背景など半径を問わない場面の既定値）
+// 球面ページでは SkyCameraRig が camPositionAt(radius) で別半径を指定する
 export const CAM_RADIUS = 15
 
 const DRAG_SPEED = 0.0042
@@ -19,7 +20,8 @@ const ZOOM_SPEED = 0.05
 const clampPhi = (v: number) => Math.max(PHI_MIN, Math.min(PHI_MAX, v))
 
 // createSharedComposable により全コンポーネントで同一の状態インスタンスを共有する
-// StarfieldBackground と MessageSphere が同じドラッグ回転に追従できるのはこの仕組みによる
+// StarfieldScene と複数の MessageSphere が同じドラッグ回転に追従できるのはこの仕組みによる
+// （状態の前進 tick は下記の単一 rAF ループが担当。各 SkyCameraRig は読み取って反映するだけ）
 const _useSkyCamera = () => {
   const prefersReduced = window.matchMedia(
     '(prefers-reduced-motion: reduce)'
@@ -35,16 +37,19 @@ const _useSkyCamera = () => {
   // ズームの目標 FOV。アニメーションループ内で実際の camera.fov へ滑らかに補間される
   const targetFov = ref(70)
 
-  // 球座標 (camTheta, camPhi) から Three.js 空間上のカメラ位置を計算する
-  // ここで一元管理することで各 3D コンポーネントが同じ位置を参照できる
-  const camPosition = computed(() => {
+  // 球座標 (camTheta, camPhi) から、指定半径での Three.js 空間上のカメラ位置を計算する
+  // 角度は共有しつつ半径だけ消費側ごとに変えられるようにする（星空は遠距離・球面ページは球の外側など）
+  const camPositionAt = (radius: number) => {
     const sp = Math.sin(camPhi.value)
     return new THREE.Vector3(
-      CAM_RADIUS * sp * Math.cos(camTheta.value),
-      CAM_RADIUS * Math.cos(camPhi.value),
-      CAM_RADIUS * sp * Math.sin(camTheta.value)
+      radius * sp * Math.cos(camTheta.value),
+      radius * Math.cos(camPhi.value),
+      radius * sp * Math.sin(camTheta.value)
     )
-  })
+  }
+
+  // ここで一元管理することで各 3D コンポーネントが同じ位置を参照できる
+  const camPosition = computed(() => camPositionAt(CAM_RADIUS))
 
   let lastX = 0
   let lastY = 0
@@ -52,7 +57,7 @@ const _useSkyCamera = () => {
   const onPointerDown = (e: PointerEvent) => {
     // setPointerCapture によりポインターが要素外に出ても pointermove/pointerup を受け取り続ける
     // window へのリスナー登録が不要になる
-    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+    ; (e.currentTarget as Element).setPointerCapture(e.pointerId)
     dragging.value = true
     lastX = e.clientX
     lastY = e.clientY
@@ -84,7 +89,6 @@ const _useSkyCamera = () => {
   }
 
   // 慣性と自動回転を 1 フレーム分進める
-  // Vue のリアクティビティではなく requestAnimationFrame ループから呼び出すこと
   const tick = () => {
     if (dragging.value) return
     camTheta.value += velTheta.value + AUTO
@@ -93,17 +97,28 @@ const _useSkyCamera = () => {
     velPhi.value *= DAMP
   }
 
+  // tick はカメラ状態を進める唯一の場所。複数の SkyCameraRig が同時に存在しても
+  // 二重に進めないよう、共有 composable 内の単一 requestAnimationFrame ループで回す。
+  // createSharedComposable のスコープが破棄されるとき（全消費者がアンマウント）に停止する。
+  let rafId = 0
+  const loop = () => {
+    tick()
+    rafId = requestAnimationFrame(loop)
+  }
+  rafId = requestAnimationFrame(loop)
+  onScopeDispose(() => cancelAnimationFrame(rafId))
+
   return {
     camTheta,
     camPhi,
     camPosition,
+    camPositionAt,
     targetFov,
     dragging,
     onPointerDown,
     onPointerMove,
     onPointerUp,
-    onWheel,
-    tick
+    onWheel
   }
 }
 

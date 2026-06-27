@@ -10,7 +10,10 @@
       @pointercancel="onPointerUp"
       @wheel.prevent="onWheel"
     >
-      <StarfieldBackground />
+      <TresCanvas :class="$style.starfield" clear-color="#000004" window-size>
+        <SkyCameraRig :radius="15" />
+        <StarfieldScene />
+      </TresCanvas>
       <QallAudio />
 
       <PrimaryViewSelector :is-ready="isMounted" />
@@ -23,13 +26,16 @@
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { TresCanvas } from '@tresjs/core'
+
+import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
+import StarfieldScene from '/@/components/3d/StarfieldScene.vue'
 import { useSkyCamera } from '/@/composables/useSkyCamera'
 import { useMainViewStore } from '/@/store/ui/mainView'
 
 import PrimaryViewSelector from './PrimaryViewSelector.vue'
 import QallAudio from './QallView/QallAudio.vue'
 import SecondaryViewSelector from './SecondaryViewSelector.vue'
-import StarfieldBackground from './StarfieldBackground.vue'
 
 const { layout } = useMainViewStore()
 const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
@@ -81,5 +87,13 @@ onBeforeUnmount(() => {
   right: 0;
   top: 0;
   pointer-events: none;
+}
+
+.starfield {
+  // ビューポート全体を覆う最背面レイヤー。ドラッグは下の layoutContainer に通す
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 </style>
