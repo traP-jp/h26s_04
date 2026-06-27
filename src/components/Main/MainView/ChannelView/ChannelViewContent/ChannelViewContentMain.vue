@@ -1,74 +1,38 @@
 <template>
   <div :class="$style.container">
-    <ScrollLoadingBar :class="$style.loadingBar" :show="isLoading" />
-    <MessagesScroller
-      ref="scrollerRef"
-      :message-ids="messageIds"
-      :is-reached-end="isReachedEnd"
-      :is-reached-latest="isReachedLatest"
-      :is-loading="isLoading"
-      :entry-message-id="entryMessageId"
-      :last-loading-direction="lastLoadingDirection"
-      @request-load-former="onLoadFormerMessagesRequest"
-      @request-load-latter="onLoadLatterMessagesRequest"
-      @scroll-passive="handleScroll"
-      @reset-is-reached-latest="resetIsReachedLatest"
-    >
-      <template #default="{ messageId, onChangeHeight, onEntryMessageLoaded }">
-        <MessagesScrollerSeparator
-          v-if="messageId === firstUnreadMessageId"
-          title="ここから未読"
-          :class="$style.unreadSeparator"
-        />
-        <MessagesScrollerSeparator
-          v-if="dayDiffMessages.has(messageId)"
-          :title="createdDate(messageId)"
-          :class="$style.dateSeparator"
-        />
-        <MessageElement
-          :class="$style.element"
-          :message-id="messageId"
-          :is-archived="isArchived"
-          :is-entry-message="messageId === entryMessageId"
-          :pinned-user-id="messagePinnedUserMap.get(messageId)"
-          @change-height="onChangeHeight"
-          @entry-message-loaded="onEntryMessageLoaded"
-        />
-      </template>
-    </MessagesScroller>
+    <div ref="canvasContainerRef" :class="$style.canvasContainer">
+      <TresCanvas>
+        <TresPerspectiveCamera :position="cameraPos" :look-at="[0, 0, 0]" />
+        <TresAmbientLight :intensity="1" />
+        <TresDirectionalLight :position="lightPos" :intensity="1" />
+        <MessageSphere :messages="messages" />
+      </TresCanvas>
+    </div>
     <MessageInput
+      :class="$style.input"
       :channel-id="channelId"
       :typing-users="typingUsers"
-      :show-to-new-message-button="showToNewMessageButton"
-      @click-to-new-message-button="toNewMessage"
+      :show-to-new-message-button="false"
     />
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { Pin } from '@traptitech/traq'
+import type { Message } from '@traptitech/traq'
 
-import { computed, ref, shallowRef } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, shallowRef } from 'vue'
 
-import MessageElement from '/@/components/Main/MainView/MessageElement/MessageElement.vue'
+import { TresCanvas } from '@tresjs/core'
+import { Vector3 } from 'three'
+
+import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
-import MessagesScroller, {
-  type MessageScrollerInstance
-} from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
-import MessagesScrollerSeparator from '/@/components/Main/MainView/MessagesScroller/MessagesScrollerSeparator.vue'
-import ScrollLoadingBar from '/@/components/Main/MainView/ScrollLoadingBar.vue'
-import useChannelPath from '/@/composables/useChannelPath'
-import { getFullDayString } from '/@/lib/basic/date'
-import { unrefElement } from '/@/lib/dom/unrefElement'
-import { constructChannelPath, constructUserPath } from '/@/router'
-import { useSubscriptionStore } from '/@/store/domain/subscription'
-import { useChannelsStore } from '/@/store/entities/channels'
+import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import { useMessagesStore } from '/@/store/entities/messages'
-import type { ChannelId, MessageId, UserId } from '/@/types/entity-ids'
+import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
-import useDayDiffMessages from './composables/useDayDiffMessages'
 
 const props = defineProps<{
   channelId: ChannelId
@@ -77,83 +41,21 @@ const props = defineProps<{
   typingUsers: UserId[]
 }>()
 
-const router = useRouter()
+const cameraPos = new Vector3(0, 0, 90)
+const lightPos = new Vector3(5, 5, 5)
 
-const scrollerRef = shallowRef<MessageScrollerInstance>()
-const {
-  messageIds,
-  isReachedEnd,
-  isReachedLatest,
-  isLoading,
-  lastLoadingDirection,
-  unreadSince,
-  onLoadFormerMessagesRequest,
-  onLoadLatterMessagesRequest
-} = useChannelMessageFetcher(scrollerRef, props)
+const canvasContainerRef = shallowRef<HTMLDivElement>()
+const scrollerRef = canvasContainerRef as unknown as ReturnType<
+  typeof shallowRef<MessageScrollerInstance | undefined>
+>
+const { messageIds } = useChannelMessageFetcher(scrollerRef, props)
 
 const { getMessageRef } = useMessagesStore()
-const firstUnreadMessageId = computed(() => {
-  if (!unreadSince.value) return ''
-  return (
-    messageIds.value.find(
-      id => getMessageRef(id).value?.createdAt === unreadSince.value
-    ) ?? ''
-  )
-})
-
-const dayDiffMessages = useDayDiffMessages(messageIds)
-const createdDate = (id: MessageId) => {
-  const message = getMessageRef(id).value
-  if (!message) {
-    return ''
-  }
-
-  return getFullDayString(new Date(message.createdAt))
-}
-
-const { channelsMap, dmChannelsMap } = useChannelsStore()
-const isArchived = computed(
-  () => channelsMap.value.get(props.channelId)?.archived ?? false
+const messages = computed(() =>
+  messageIds.value
+    .map(id => getMessageRef(id).value)
+    .filter((m): m is Message => m !== undefined)
 )
-const messagePinnedUserMap = computed(
-  () => new Map(props.pinnedMessages.map(pin => [pin.message.id, pin.userId]))
-)
-
-const { unreadChannelsMap } = useSubscriptionStore()
-const resetIsReachedLatest = () => {
-  if (!unreadChannelsMap.value.get(props.channelId)) return
-  isReachedLatest.value = false
-}
-
-const showToNewMessageButton = ref(false)
-const { channelIdToPathString } = useChannelPath()
-const toNewMessage = () => {
-  if (props.entryMessageId) {
-    const channelPath = channelIdToPathString(props.channelId) as string
-    if (dmChannelsMap.value.has(props.channelId)) {
-      router.replace(constructUserPath(channelPath))
-    } else {
-      router.replace(constructChannelPath(channelPath))
-    }
-  }
-
-  const element = unrefElement(scrollerRef)
-  if (!element) return
-
-  element.scrollTo({
-    top: element.scrollHeight
-  })
-}
-
-const handleScroll = () => {
-  const element = unrefElement(scrollerRef)
-  if (!element || isLoading.value) return
-  const { scrollTop, scrollHeight, clientHeight } = element
-  showToNewMessageButton.value = scrollHeight - 2 * clientHeight > scrollTop
-  if (!isReachedLatest.value) {
-    showToNewMessageButton.value = true
-  }
-}
 </script>
 
 <style lang="scss" module>
@@ -166,24 +68,13 @@ const handleScroll = () => {
   width: 100%;
 }
 
-.loadingBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 12px;
-  z-index: $z-index-message-loading;
+.canvasContainer {
+  flex: 1 1;
+  width: 100%;
+  overflow: hidden;
 }
 
-.unreadSeparator {
-  color: $theme-accent-notification-default;
-}
-
-.dateSeparator {
-  @include color-ui-secondary;
-}
-.element {
-  margin: 4px 0;
-  contain: content;
+.input {
+  flex-shrink: 0;
 }
 </style>
