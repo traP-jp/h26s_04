@@ -128,7 +128,7 @@ const component = computed(() => {
   position: absolute;
   width: 100%;
   height: 100%;
-  margin-left: 30px;
+  padding-left: 30px;
   top: 0;
   left: 0;
   display: flex;

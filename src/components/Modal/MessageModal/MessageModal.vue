@@ -45,7 +45,8 @@ const { clearModal } = useModalStore()
   left:5vw;
   width: calc(50% - 32px);
   max-width: 30vw;
-  max-height: calc(100% - 64px);
+  //max-height: calc(100% - 64px);
+  height:60vh;
   border: {
     style: solid;
     width: 2px;
@@ -53,6 +54,14 @@ const { clearModal } = useModalStore()
   }
   border-radius: 4px;
   overflow: hidden;
+  border-left: 1px solid white;
+  animation: modal-rise 0.45s cubic-bezier(0, 0, 0.2, 1) both;
+}
+
+@keyframes modal-rise {
+  from {
+    transform: translateY(100%);
+  }
 }
 
 .header {
@@ -61,7 +70,6 @@ const { clearModal } = useModalStore()
 
 .body {
   width: 100%;
-  border-left: 1px solid white;
   overflow: {
     x: hidden;
     y: auto;
