@@ -28,15 +28,4 @@ const props = withDefaults(
   text-align: right;
   margin-right: 16px;
 }
-.item {
-  display: flex;
-  align-items: center;
-  margin: 4px 0;
-  &:first-child {
-    margin-top: 0;
-  }
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
 </style>

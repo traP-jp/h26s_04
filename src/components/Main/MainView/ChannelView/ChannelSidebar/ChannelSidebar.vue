@@ -1,7 +1,7 @@
 <template>
-  <PrimaryViewSidebar :is-sidebar-opener-ready="isSidebarOpenerReady"> 
+  <PrimaryViewSidebar :is-sidebar-opener-ready="isSidebarOpenerReady">
     <template #page>
-      <PrimaryViewSidebarPage v-if="page === 'default'"> 
+      <PrimaryViewSidebarPage v-if="page === 'default'">
         <template #header>
           <SidebarHeader icon-string="#" :text="channelName" />
         </template>

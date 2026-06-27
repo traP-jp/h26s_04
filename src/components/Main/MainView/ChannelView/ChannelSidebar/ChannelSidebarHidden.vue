@@ -24,11 +24,10 @@
       :inactive-viewer-ids="inactiveViewerIds"
     />
 
-    <ChannelSidebarHiddenMember 
+    <ChannelSidebarHiddenMember
       :channel-id="channelId"
       :viewer-ids="viewerIds"
-      />
-
+    />
   </div>
 </template>
 
@@ -38,7 +37,7 @@ import UserIconEllipsisList from '/@/components/UI/UserIconEllipsisList.vue'
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarHiddenCurrentViewers from './ChannelSidebarHiddenCurrentViewers.vue'
-import ChannelSidebarHiddenMember from './ChannelSidebarHiddenMember.vue';
+import ChannelSidebarHiddenMember from './ChannelSidebarHiddenMember.vue'
 
 withDefaults(
   defineProps<{

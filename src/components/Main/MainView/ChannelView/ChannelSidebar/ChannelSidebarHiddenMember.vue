@@ -1,16 +1,14 @@
 <template>
-    <div :class="$style.stats">
-        Subscribers:
-        <div v-if="isForceNotification"> 強制通知チャンネル </div>
-        <div v-else-if="!subscribers">
-            メンバーの取得に失敗しました
-        </div>
-        <ChannelSidebarMemberIcons
-            v-else-if="subscribers.size > 0"
-            :viewer-states="viewStates"
-        />
-        <div v-else> No Subscribers</div>
-    </div>
+  <div :class="$style.stats">
+    Subscribers:
+    <div v-if="isForceNotification">強制通知チャンネル</div>
+    <div v-else-if="!subscribers">メンバーの取得に失敗しました</div>
+    <ChannelSidebarMemberIcons
+      v-else-if="subscribers.size > 0"
+      :viewer-states="viewStates"
+    />
+    <div v-else>No Subscribers</div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -56,10 +54,10 @@ const viewStates = computed(() =>
 </script>
 
 <style lang="scss" module>
-    .stats {
-    @include color-ui-tertiary;
-    white-space: nowrap;
-    text-align: right;
-    margin-right: 16px;
-    }
+.stats {
+  @include color-ui-tertiary;
+  white-space: nowrap;
+  text-align: right;
+  margin-right: 16px;
+}
 </style>

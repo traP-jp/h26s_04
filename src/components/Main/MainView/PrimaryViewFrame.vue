@@ -33,7 +33,7 @@ defineProps<{
 .sidebar {
   position: absolute;
   top: 0;
-  right: 0; // 中央の右上に重ねるなら
+  right: 0;
   bottom: 0;
   z-index: $z-index-sidebar;
 }

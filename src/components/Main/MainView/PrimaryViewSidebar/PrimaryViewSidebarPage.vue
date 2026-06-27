@@ -10,7 +10,6 @@
         @click="emit('back')"
       />
       <slot name="header" />
-      <!-- <CloseButton :size="28" @close="closeSidebar" /> -->
     </div>
     <div :class="$style.content">
       <slot name="content" />
@@ -20,7 +19,6 @@
 
 <script lang="ts" setup>
 import AIcon from '/@/components/UI/AIcon.vue'
-//import CloseButton from '/@/components/UI/CloseButton.vue'
 import useSidebar from '/@/composables/mainView/useSidebar'
 
 withDefaults(

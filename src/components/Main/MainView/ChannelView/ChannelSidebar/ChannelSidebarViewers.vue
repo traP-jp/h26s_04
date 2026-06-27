@@ -4,7 +4,7 @@
     large-padding
     clickable
     right-align
-    :title="`Current Active Viewers: ${viewerIds.length} \n Current Inactive Viewers: ${inactiveViewerIds.length}`"
+    :title="`Active: ${viewerIds.length} / Inactive: ${inactiveViewerIds.length}`"
     @toggle="toggle"
   >
     <!-- <UserIconEllipsisList
