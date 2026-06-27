@@ -90,7 +90,11 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
 
     if (channelId !== props.channelId) return
 
+    const shouldRefetchStampStats = channelStats.value !== undefined
     updateTotalMessageCount(count => Math.max(0, count - 1))
+    if (shouldRefetchStampStats) {
+      requestStampStatsRefetch()
+    }
   })
   useMittListener(messageMitt, 'reconnect', () => {
     fetch()
