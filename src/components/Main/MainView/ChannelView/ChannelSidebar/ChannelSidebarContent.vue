@@ -7,7 +7,15 @@
       :class="$style.sidebarItem"
     />
     <ChannelSidebarMessageCount
-      :channel-id="channelId"
+      :total-message-count="totalMessageCount"
+      :is-loading="isLoading"
+      :is-failed="isFailed"
+      :class="$style.sidebarItem"
+    />
+    <ChannelSidebarStampStats
+      :stamp-stats="stampStats"
+      :is-loading="isLoading"
+      :is-failed="isFailed"
       :class="$style.sidebarItem"
     />
     <ChannelSidebarMember
@@ -15,28 +23,31 @@
       :class="$style.sidebarItem"
       :viewer-ids="viewerIds"
     />
-    <ChannelSidebarBots :channel-id="channelId" :class="$style.sidebarItem" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
-import ChannelSidebarBots from './ChannelSidebarBots.vue'
 import ChannelSidebarMember from './ChannelSidebarMember.vue'
 import ChannelSidebarMessageCount from './ChannelSidebarMessageCount.vue'
+import ChannelSidebarStampStats from './ChannelSidebarStampStats.vue'
 import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
+import useChannelStats from './composables/useChannelStats'
 
 const isViewersDetailOpen = defineModel<boolean>('isViewersDetailOpen', {
   required: true
 })
 
-defineProps<{
+const props = defineProps<{
   channelId: ChannelId
   viewerIds: readonly UserId[]
   inactiveViewerIds: readonly UserId[]
   pinnedMessagesCount?: number
 }>()
+
+const { totalMessageCount, stampStats, isLoading, isFailed } =
+  useChannelStats(props)
 </script>
 
 <style lang="scss" module>

@@ -27,6 +27,23 @@ const FONT_CSS_URL =
 
 const rootPath = './public/fonts'
 const rootUrl = '/fonts'
+const MONASPACE_ROOT_URL =
+  'https://raw.githubusercontent.com/githubnext/monaspace/main'
+const MONASPACE_FILES = [
+  {
+    filename: 'MonaspaceNeon-Regular.woff2',
+    url: `${MONASPACE_ROOT_URL}/fonts/Web%20Fonts/Static%20Web%20Fonts/Monaspace%20Neon/MonaspaceNeon-Regular.woff2`
+  },
+  {
+    filename: 'MonaspaceNeon-Bold.woff2',
+    url: `${MONASPACE_ROOT_URL}/fonts/Web%20Fonts/Static%20Web%20Fonts/Monaspace%20Neon/MonaspaceNeon-Bold.woff2`
+  },
+  {
+    filename: 'LICENSE',
+    url: `${MONASPACE_ROOT_URL}/LICENSE`
+  }
+]
+const monaspacePath = path.join(rootPath, 'monaspace')
 
 const MAX_REQUESTS_COUNT = 8
 const INTERVAL_MS = 30
@@ -108,6 +125,42 @@ const downloadAndtransform = async (url, filename) => {
   }
 }
 
+const downloadFile = async (url, outputPath) => {
+  const res = await axios.get(url, { responseType: 'arraybuffer' })
+  await fs.writeFile(outputPath, Buffer.from(res.data, 'binary'))
+}
+
+const downloadMonaspace = async () => {
+  await fs.mkdir(monaspacePath, { recursive: true })
+  await Promise.all(
+    MONASPACE_FILES.map(({ filename, url }) =>
+      downloadFile(url, path.join(monaspacePath, filename))
+    )
+  )
+}
+
+const hasMonaspaceCache = async () => {
+  try {
+    await Promise.all(
+      MONASPACE_FILES.map(({ filename }) =>
+        fs.access(path.join(monaspacePath, filename))
+      )
+    )
+    return true
+  } catch {
+    return false
+  }
+}
+
+const hasFontCache = async () => {
+  try {
+    const files = await fs.readdir(rootPath)
+    return files.some(f => f.endsWith('.woff2')) && (await hasMonaspaceCache())
+  } catch {
+    return false
+  }
+}
+
 const generateFontFace = (font, filename) => {
   const newFont = {
     ...font,
@@ -127,13 +180,10 @@ const generateFontFace = (font, filename) => {
 
 ;(async () => {
   if (process.env.MAY_SKIP_FONT_GEN) {
-    try {
-      const files = await fs.readdir(rootPath)
-      if (files.some(f => f.endsWith('.woff2'))) {
-        console.log('Font cache found. Skipping...')
-        return
-      }
-    } catch {}
+    if (await hasFontCache()) {
+      console.log('Font cache found. Skipping...')
+      return
+    }
   }
 
   const fonts = await getFontsInfo()
@@ -159,6 +209,8 @@ const generateFontFace = (font, filename) => {
 
     cssText += fontFaceText
   }
+  promises.push(downloadMonaspace())
+
   const { code: minifiedCssText, warnings } = await esbuild.transform(cssText, {
     loader: 'css',
     minify: true,

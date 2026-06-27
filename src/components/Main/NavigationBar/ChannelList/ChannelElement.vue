@@ -186,9 +186,9 @@ const iconSize = computed(() => (props.channel.archived ? 17 : undefined))
 </script>
 
 <style lang="scss" module>
-$elementHeight: 32px;
-$bgHeight: 36px;
-$bgLeftShift: 8px;
+$elementHeight: 26px;
+$bgHeight: 28px;
+$bgLeftShift: 4px;
 
 .container {
   @include color-ui-primary;
@@ -196,6 +196,7 @@ $bgLeftShift: 8px;
   user-select: none;
   position: relative;
   contain: layout;
+  line-height: 1.2;
   &[data-is-inactive] {
     @include color-ui-secondary;
   }
@@ -207,10 +208,10 @@ $bgLeftShift: 8px;
   position: relative;
   display: flex;
   height: $elementHeight;
-  padding-left: 24px;
-  padding-right: 4px;
+  padding-left: 20px;
+  padding-right: 6px;
   margin-left: $bgLeftShift;
-  z-index: 0;
+  z-index: 1;
   &[data-is-inactive] {
     @include color-ui-secondary;
   }
@@ -221,8 +222,11 @@ $bgLeftShift: 8px;
 .channel {
   display: flex;
   align-items: center;
-  margin-left: $bgLeftShift;
-  width: calc(100% - $bgLeftShift);
+  gap: 6px;
+  min-width: 0;
+  margin-left: 2px;
+  width: calc(100% - 2px);
+  text-decoration: none;
 }
 .channelIcon {
   flex-shrink: 0;
@@ -233,28 +237,40 @@ $bgLeftShift: 8px;
 
 .selectedBg {
   position: absolute;
-  width: calc(100% + #{$bgLeftShift});
   height: $bgHeight;
   top: -1 * math.div($bgHeight - $elementHeight, 2);
-  left: 0;
+  left: 2px;
+  right: 2px;
   z-index: 0;
-  border-top-left-radius: 100vw;
-  border-bottom-left-radius: 100vw;
-  opacity: 0.1;
+  border-radius: 7px;
+  opacity: 1;
   pointer-events: none;
-
   display: none;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.04);
+
   .container[data-is-selected] > & {
     @include background-accent-primary;
     display: block;
+    opacity: 0.1;
   }
   &[data-is-hovered],
   &[data-is-focused] {
     display: block;
     background: $theme-ui-primary-background;
+    opacity: 0.2;
+  }
+  &[data-is-focused] {
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.1);
+  }
+  .container[data-is-selected] > &[data-is-hovered],
+  .container[data-is-selected] > &[data-is-focused] {
+    @include background-accent-primary;
+    opacity: 0.16;
   }
 }
 .slot {
+  position: relative;
+  z-index: 1;
   padding-left: $bgLeftShift;
 }
 </style>
