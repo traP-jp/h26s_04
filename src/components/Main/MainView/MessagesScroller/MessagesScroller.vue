@@ -304,6 +304,7 @@ useScrollRestoration(rootRef, state)
 .viewport {
   display: flex;
   flex-flow: column;
+  align-items: center;
   // NOTE: bottomSpacer 分だけ除く
   min-height: calc(100% - 12px);
 }
