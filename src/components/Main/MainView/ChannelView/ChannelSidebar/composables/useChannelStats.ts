@@ -16,6 +16,7 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
   const isFailed = ref(false)
   let fetchId = 0
   let stampStatsRefetchTimeout: ReturnType<typeof setTimeout> | undefined
+  let shouldRefetchAfterLoading = false
 
   const fetch = async ({ clear = false } = {}) => {
     const currentFetchId = ++fetchId
@@ -40,8 +41,21 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     } finally {
       if (currentFetchId === fetchId) {
         isLoading.value = false
+        if (shouldRefetchAfterLoading) {
+          shouldRefetchAfterLoading = false
+          fetch()
+        }
       }
     }
+  }
+
+  const requestFetch = () => {
+    if (isLoading.value) {
+      shouldRefetchAfterLoading = true
+      return
+    }
+
+    fetch()
   }
 
   const requestStampStatsRefetch = () => {
@@ -51,13 +65,13 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
 
     stampStatsRefetchTimeout = setTimeout(() => {
       stampStatsRefetchTimeout = undefined
-      fetch()
+      requestFetch()
     }, STAMP_STATS_REFETCH_DELAY_MS)
   }
 
   const updateTotalMessageCount = (getNextCount: (count: number) => number) => {
     if (channelStats.value === undefined) {
-      fetch()
+      requestFetch()
       return
     }
 
@@ -70,6 +84,7 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
   watch(
     () => props.channelId,
     () => {
+      shouldRefetchAfterLoading = false
       fetch({ clear: true })
     },
     { immediate: true }
@@ -82,9 +97,7 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
   })
   useMittListener(messageMitt, 'deleteMessage', ({ channelId }) => {
     if (channelId === undefined) {
-      if (!isLoading.value) {
-        fetch()
-      }
+      requestFetch()
       return
     }
 
@@ -97,7 +110,7 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     }
   })
   useMittListener(messageMitt, 'reconnect', () => {
-    fetch()
+    requestFetch()
   })
   useMittListener(wsListener, 'MESSAGE_STAMPED', requestStampStatsRefetch)
   useMittListener(wsListener, 'MESSAGE_UNSTAMPED', requestStampStatsRefetch)
