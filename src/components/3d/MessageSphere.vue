@@ -38,7 +38,7 @@ const positions = computed(() =>
 <style lang="scss" module>
 .card {
   background: var(--theme-background-primary-default);
-  border-radius: 8px;
+  border-radius: 50px;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
   padding: 4px;
   pointer-events: auto;

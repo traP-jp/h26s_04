@@ -184,7 +184,7 @@ $maskImage: linear-gradient(
   overflow: clip;
   margin: 6px auto;
   border: 1px dashed rgba(255, 96, 160, 0.72);
-  border-radius: 4px;
+  border-radius: 44px;
   padding: 8px $messagePadding;
   &[data-is-mobile] {
     padding: 8px $messagePaddingMobile;
