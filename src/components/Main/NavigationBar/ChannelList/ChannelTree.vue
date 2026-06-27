@@ -63,10 +63,9 @@ const toggleChildren = (channelId: ChannelId) => {
   scrollbar-width: none;
   -ms-overflow-style: none;
   font-family:
-    'Monaspace Neon', 'Monaspace Argon', 'Monaspace Xenon',
-    'Monaspace Krypton', 'Monaspace Radon', 'Monaspace', 'JetBrains Mono',
-    'Cascadia Code', 'Fira Code', 'SFMono-Regular', 'Menlo', 'Consolas',
-    monospace;
+    'Monaspace Neon', 'Monaspace Argon', 'Monaspace Xenon', 'Monaspace Krypton',
+    'Monaspace Radon', 'Monaspace', 'JetBrains Mono', 'Cascadia Code',
+    'Fira Code', 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
   font-feature-settings: 'calt' 1;
   font-size: 0.92rem;
   letter-spacing: -0.02em;
