@@ -12,6 +12,10 @@
       :class="$style.sidebarItem"
     />
     <ChannelSidebarTopic :class="$style.sidebarItem" :channel-id="channelId" />
+    <ChannelSidebarMessageCount
+      :channel-id="channelId"
+      :class="$style.sidebarItem"
+    />
     <ChannelSidebarPinned
       :pinned-message-length="pinnedMessagesCount"
       :class="$style.sidebarItem"
@@ -45,8 +49,12 @@ import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarBots from './ChannelSidebarBots.vue'
 import ChannelSidebarMember from './ChannelSidebarMember.vue'
+<<<<<<< HEAD
 import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
 /* import ChannelSidebarEvents from './ChannelSidebarEvents.vue'
+=======
+import ChannelSidebarMessageCount from './ChannelSidebarMessageCount.vue'
+>>>>>>> origin/master
 import ChannelSidebarPinned from './ChannelSidebarPinned.vue'
 import ChannelSidebarQall from './ChannelSidebarQall.vue'
 import ChannelSidebarRelation from './ChannelSidebarRelation.vue'

@@ -119,20 +119,26 @@ const useActivityStream = () => {
 
     timeline.value[sameMessageIndex] = updatedMessage
   })
-  useMittListener(messageMitt, 'deleteMessage', deletedMessageId => {
-    const deletedMessage = timeline.value.find(
-      ({ id }) => id === deletedMessageId
-    )
-    if (!deletedMessage) return
+  useMittListener(
+    messageMitt,
+    'deleteMessage',
+    ({ messageId: deletedMessageId }) => {
+      const deletedMessage = timeline.value.find(
+        ({ id }) => id === deletedMessageId
+      )
+      if (!deletedMessage) return
 
-    timeline.value = timeline.value.filter(({ id }) => id !== deletedMessageId)
-    if (
-      timelineChannelMap.value.get(deletedMessage.channelId)?.id ===
-      deletedMessage.id
-    ) {
-      timelineChannelMap.value.delete(deletedMessage.channelId)
+      timeline.value = timeline.value.filter(
+        ({ id }) => id !== deletedMessageId
+      )
+      if (
+        timelineChannelMap.value.get(deletedMessage.channelId)?.id ===
+        deletedMessage.id
+      ) {
+        timelineChannelMap.value.delete(deletedMessage.channelId)
+      }
     }
-  })
+  )
   useMittListener(messageMitt, 'reconnect', async () => {
     setTimelineStreamingState(mode.value.all)
     await fetch()

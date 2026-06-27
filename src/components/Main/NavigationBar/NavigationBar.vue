@@ -16,5 +16,8 @@ const { isMobile } = useResponsive()
 <style lang="scss" module>
 .container {
   height: 100%;
+  opacity: 1;
+  position: absolute;
+  z-index: 100;
 }
 </style>

@@ -6,6 +6,11 @@
         { [$style.scrollbarHidden]: isNavigationClosed }
       ]"
     >
+      <ChannelTreeComponent
+        :id="allPanelId"
+        :channels="topLevelChannels"
+        role="tabpanel"
+      />
       <DesktopNavigationSelector
         :current-navigation="navigationSelectorState.currentNavigation"
         :current-ephemeral-navigation="
@@ -20,12 +25,11 @@
     </div>
     <div
       ref="navigationRef"
-      :style="{ width: `${navigationWidth}px` }"
       :class="[$style.navigations, { [$style.hidden]: isNavigationClosed }]"
     >
-      <NavigationContent
+      <!--<NavigationContent
         :current-navigation="navigationSelectorState.currentNavigation"
-      />
+      />-->
       <transition name="fade-bottom">
         <EphemeralNavigationContent
           v-if="ephemeralNavigationSelectorState.currentNavigation"
@@ -49,12 +53,18 @@
 </template>
 
 <script lang="ts" setup>
+import { computed, toRaw } from 'vue'
+
 import DesktopNavigationSelector from '/@/components/Main/NavigationBar/DesktopNavigationSelector.vue'
 import DesktopToolBox from '/@/components/Main/NavigationBar/DesktopToolBox.vue'
 import EphemeralNavigationContent from '/@/components/Main/NavigationBar/EphemeralNavigationContent/EphemeralNavigationContent.vue'
-import NavigationContent from '/@/components/Main/NavigationBar/NavigationContent.vue'
+import { randomString } from '/@/lib/basic/randomString'
+import { filterTrees } from '/@/lib/basic/tree'
+import { useBrowserSettings } from '/@/store/app/browserSettings'
+import { useChannelTree } from '/@/store/domain/channelTree'
 import { useNavigationLayoutStore } from '/@/store/ui/navigationLayout'
 
+import ChannelTreeComponent from './ChannelList/ChannelTree.vue'
 import useNavigation from './composables/useNavigation'
 import useNavigationResizer from './composables/useNavigationResizer'
 
@@ -74,8 +84,19 @@ const {
   resizerRef: navigationResizerRef
 } = useNavigationLayoutStore()
 
-const { onDragStart, onDragging, onDragEnd, navigationWidth } =
-  useNavigationResizer()
+const { onDragStart, onDragging, onDragEnd } = useNavigationResizer()
+
+const allPanelId = randomString()
+
+const { channelTree } = useChannelTree()
+const { showArchivedChannels } = useBrowserSettings()
+
+const topLevelChannels = computed(() =>
+  filterTrees(
+    toRaw(channelTree.value.children),
+    channel => showArchivedChannels.value || !channel.archived
+  )
+)
 </script>
 
 <style lang="scss" module>
@@ -88,7 +109,7 @@ $ephemeralNavigationMinHeight: 64px;
   display: flex;
   width: fit-content;
   height: 100%;
-  background: var(--specific-navigation-bar-desktop-background);
+  // background: var(--specific-navigation-bar-desktop-background);
 }
 .selector {
   display: flex;

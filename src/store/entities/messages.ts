@@ -12,6 +12,7 @@ import { wsListener } from '/@/lib/websocket'
 import { useMeStore } from '/@/store/domain/me'
 import { convertToRefsStore } from '/@/store/utils/convertToRefsStore'
 import type {
+  ChannelId,
   ExternalUrl,
   FileId,
   MessageId,
@@ -22,7 +23,7 @@ type MessageEventMap = {
   reconnect: void
   addMessage: { message: Message; isCiting: boolean }
   updateMessage: Message
-  deleteMessage: MessageId
+  deleteMessage: { messageId: MessageId; channelId?: ChannelId }
   pinMessage: Message
   unpinMessage: MessageId
 }
@@ -69,11 +70,12 @@ const useMessagesStorePinia = defineStore('entities/messages', () => {
   }
   const deleteMessage = (messageId: MessageId) => {
     const messageRef = messagesMap.get(messageId)
+    const channelId = messageRef?.value?.channelId
     if (messageRef) {
       messageRef.value = undefined
     }
 
-    messageMitt.emit('deleteMessage', messageId)
+    messageMitt.emit('deleteMessage', { messageId, channelId })
   }
   const fetchMessage = async ({
     messageId,

@@ -244,7 +244,7 @@ const useChannelMessageFetcher = (
   useMittListener(messageMitt, 'updateMessage', async message => {
     await renderMessageContent(message.id)
   })
-  useMittListener(messageMitt, 'deleteMessage', messageId => {
+  useMittListener(messageMitt, 'deleteMessage', ({ messageId }) => {
     const index = messagesFetcher.messageIds.value.indexOf(messageId)
     if (index === -1) return
     messagesFetcher.messageIds.value.splice(index, 1)
