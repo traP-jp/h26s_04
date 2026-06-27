@@ -38,8 +38,7 @@ const props = defineProps<{
   channelId: ChannelId
 }>()
 
-const { totalMessageCount, isLoading, isFailed } =
-  useChannelMessageCount(props)
+const { totalMessageCount, isLoading, isFailed } = useChannelMessageCount(props)
 const countDirection = ref<'up' | 'down'>('up')
 const isDigitTransitionEnabled = ref(false)
 
