@@ -180,6 +180,7 @@ $maskImage: linear-gradient(
   width: $messageDebugWidth;
   max-width: calc(100% - 16px);
   min-width: 0;
+  align-self: center;
   overflow: hidden;
   overflow: clip;
   margin: 6px auto;

@@ -9,13 +9,6 @@
       @mousedown.middle="tool.onClick"
       @click="tool.onClick"
     />
-    <UserIcon
-      v-if="myId"
-      :class="$style.item"
-      :size="36"
-      :user-id="myId"
-      data-testid="my-icon-button"
-    />
     <AppList
       v-if="isServicesShown"
       :class="$style.services"
@@ -28,10 +21,7 @@
 import AppList from '/@/components/Main/NavigationBar/AppList.vue'
 import ToolItem from '/@/components/Main/NavigationBar/ToolItem.vue'
 import useToolBox from '/@/components/Main/NavigationBar/composables/useToolBox'
-import UserIcon from '/@/components/UI/UserIcon.vue'
-import { useMeStore } from '/@/store/domain/me'
 
-const { myId } = useMeStore()
 const { tools, isServicesShown, closeServices } = useToolBox()
 </script>
 
@@ -40,12 +30,14 @@ $header-width: 64px;
 
 .container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   padding: 8px 0;
 }
 .item {
-  margin: 8px 0;
+  margin: 0 8px;
 }
 .services {
   position: fixed;
