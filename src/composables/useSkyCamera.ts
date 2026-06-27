@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 
-import { createSharedComposable } from '@vueuse/core'
 import * as THREE from 'three'
+import { createSharedComposable } from '@vueuse/core'
 
 // 天球の中心からカメラまでの距離。StarfieldBackground・MessageSphere で共用する
 export const CAM_RADIUS = 15
@@ -103,7 +103,7 @@ const _useSkyCamera = () => {
     onPointerMove,
     onPointerUp,
     onWheel,
-    tick,
+    tick
   }
 }
 

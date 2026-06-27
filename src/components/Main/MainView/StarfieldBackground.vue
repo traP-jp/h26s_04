@@ -3,8 +3,9 @@
 </template>
 
 <script lang="ts" setup>
-import * as THREE from 'three'
 import { onMounted, onUnmounted, ref } from 'vue'
+
+import * as THREE from 'three'
 
 import { useSkyCamera } from '/@/composables/useSkyCamera'
 
@@ -26,7 +27,7 @@ const PALETTE = [
   { hex: 0xffd8a8, w: 8 },
   { hex: 0xffb56c, w: 6 },
   { hex: 0xff9966, w: 4 },
-  { hex: 0xff7755, w: 2 },
+  { hex: 0xff7755, w: 2 }
 ]
 const TOTAL_W = PALETTE.reduce((s, p) => s + p.w, 0)
 
@@ -90,8 +91,7 @@ onMounted(() => {
     sizes[i] = 1.0 + Math.pow(Math.random(), 3) * 3.5
     phases[i] = Math.random() * Math.PI * 2
     twSpeed[i] = 0.4 + Math.random() * 2.0
-    twAmp[i] =
-      Math.random() < 0.6 ? Math.random() * 0.35 : Math.random() * 0.08
+    twAmp[i] = Math.random() < 0.6 ? Math.random() * 0.35 : Math.random() * 0.08
   }
 
   const geo = new THREE.BufferGeometry()
@@ -106,7 +106,7 @@ onMounted(() => {
     uTime: { value: 0 },
     uPixelRatio: { value: pixelRatio },
     // prefers-reduced-motion 時は 0 にしてまたたきを停止する
-    uTwinkle: { value: prefersReduced ? 0.0 : 1.0 },
+    uTwinkle: { value: prefersReduced ? 0.0 : 1.0 }
   }
 
   const material = new THREE.ShaderMaterial({
@@ -147,7 +147,7 @@ onMounted(() => {
     depthWrite: false,
     depthTest: false,
     // 加算合成により重なった星が明るく光る発光表現になる
-    blending: THREE.AdditiveBlending,
+    blending: THREE.AdditiveBlending
   })
 
   const stars = new THREE.Points(geo, material)

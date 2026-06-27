@@ -23,8 +23,8 @@
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-import { useMainViewStore } from '/@/store/ui/mainView'
 import { useSkyCamera } from '/@/composables/useSkyCamera'
+import { useMainViewStore } from '/@/store/ui/mainView'
 
 import PrimaryViewSelector from './PrimaryViewSelector.vue'
 import QallAudio from './QallView/QallAudio.vue'
