@@ -30,20 +30,18 @@
 import { computed, ref, watch } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import type { ChannelId } from '/@/types/entity-ids'
-
-import useChannelMessageCount from './composables/useChannelMessageCount'
 
 const props = defineProps<{
-  channelId: ChannelId
+  totalMessageCount?: number
+  isLoading: boolean
+  isFailed: boolean
 }>()
 
-const { totalMessageCount, isLoading, isFailed } = useChannelMessageCount(props)
 const countDirection = ref<'up' | 'down'>('up')
 const isDigitTransitionEnabled = ref(false)
 
 const isMessageCountVisible = computed(
-  () => !isFailed.value && totalMessageCount.value !== undefined
+  () => !props.isFailed && props.totalMessageCount !== undefined
 )
 
 const countTransitionName = computed(() =>
@@ -53,30 +51,33 @@ const countTransitionName = computed(() =>
 )
 
 const messageCountText = computed(() => {
-  if (isFailed.value) return 'error'
-  if (totalMessageCount.value === undefined) {
-    return isLoading.value ? 'loading' : '-'
+  if (props.isFailed) return 'error'
+  if (props.totalMessageCount === undefined) {
+    return props.isLoading ? 'loading' : '-'
   }
 
-  return totalMessageCount.value.toLocaleString()
+  return props.totalMessageCount.toLocaleString()
 })
 
 const messageCountChars = computed(() =>
-  isMessageCountVisible.value && totalMessageCount.value !== undefined
-    ? totalMessageCount.value.toLocaleString().split('')
+  isMessageCountVisible.value && props.totalMessageCount !== undefined
+    ? props.totalMessageCount.toLocaleString().split('')
     : []
 )
 
-watch(totalMessageCount, (newValue, oldValue) => {
-  isDigitTransitionEnabled.value = false
+watch(
+  () => props.totalMessageCount,
+  (newValue, oldValue) => {
+    isDigitTransitionEnabled.value = false
 
-  if (oldValue === undefined) return
-  if (newValue === undefined) return
-  if (newValue === oldValue) return
+    if (oldValue === undefined) return
+    if (newValue === undefined) return
+    if (newValue === oldValue) return
 
-  countDirection.value = newValue > oldValue ? 'up' : 'down'
-  isDigitTransitionEnabled.value = true
-})
+    countDirection.value = newValue > oldValue ? 'up' : 'down'
+    isDigitTransitionEnabled.value = true
+  }
+)
 </script>
 
 <style lang="scss" module>

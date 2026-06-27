@@ -1,31 +1,14 @@
-import { ref, watch } from 'vue'
+import type { ChannelStats } from '@traptitech/traq'
 
-import axios from 'axios'
+import { computed, ref, watch } from 'vue'
 
 import useMittListener from '/@/composables/utils/useMittListener'
-import { BASE_PATH } from '/@/lib/apis'
+import apis from '/@/lib/apis'
 import { messageMitt } from '/@/store/entities/messages'
 import type { ChannelId } from '/@/types/entity-ids'
 
-type ChannelStats = {
-  totalMessageCount: number
-}
-
-const fetchChannelStats = (
-  channelId: ChannelId,
-  excludeDeletedMessages: boolean
-) =>
-  axios.get<ChannelStats>(
-    `${BASE_PATH}/channels/${encodeURIComponent(channelId)}/stats`,
-    {
-      params: {
-        'exclude-deleted-messages': excludeDeletedMessages
-      }
-    }
-  )
-
-const useChannelMessageCount = (props: { channelId: ChannelId }) => {
-  const totalMessageCount = ref<number>()
+const useChannelStats = (props: { channelId: ChannelId }) => {
+  const channelStats = ref<ChannelStats>()
   const isLoading = ref(false)
   const isFailed = ref(false)
   let fetchId = 0
@@ -33,27 +16,39 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
   const fetch = async ({ clear = false } = {}) => {
     const currentFetchId = ++fetchId
     if (clear) {
-      totalMessageCount.value = undefined
+      channelStats.value = undefined
     }
     isLoading.value = true
     isFailed.value = false
 
     try {
-      const { data } = await fetchChannelStats(props.channelId, true)
+      const { data } = await apis.getChannelStats(props.channelId, true)
       if (currentFetchId !== fetchId) return
 
-      totalMessageCount.value = data.totalMessageCount
+      channelStats.value = data
     } catch (e) {
       if (currentFetchId !== fetchId) return
 
       // eslint-disable-next-line no-console
       console.error(e)
-      totalMessageCount.value = undefined
+      channelStats.value = undefined
       isFailed.value = true
     } finally {
       if (currentFetchId === fetchId) {
         isLoading.value = false
       }
+    }
+  }
+
+  const updateTotalMessageCount = (getNextCount: (count: number) => number) => {
+    if (channelStats.value === undefined) {
+      fetch()
+      return
+    }
+
+    channelStats.value = {
+      ...channelStats.value,
+      totalMessageCount: getNextCount(channelStats.value.totalMessageCount)
     }
   }
 
@@ -68,12 +63,7 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
   useMittListener(messageMitt, 'addMessage', ({ message }) => {
     if (message.channelId !== props.channelId) return
 
-    if (totalMessageCount.value === undefined) {
-      fetch()
-      return
-    }
-
-    totalMessageCount.value++
+    updateTotalMessageCount(count => count + 1)
   })
   useMittListener(messageMitt, 'deleteMessage', ({ channelId }) => {
     if (channelId === undefined) {
@@ -85,24 +75,23 @@ const useChannelMessageCount = (props: { channelId: ChannelId }) => {
 
     if (channelId !== props.channelId) return
 
-    if (totalMessageCount.value === undefined) {
-      if (!isLoading.value) {
-        fetch()
-      }
-      return
-    }
-
-    totalMessageCount.value = Math.max(0, totalMessageCount.value - 1)
+    updateTotalMessageCount(count => Math.max(0, count - 1))
   })
   useMittListener(messageMitt, 'reconnect', () => {
     fetch()
   })
 
+  const totalMessageCount = computed(
+    () => channelStats.value?.totalMessageCount
+  )
+  const stampStats = computed(() => channelStats.value?.stamps)
+
   return {
     totalMessageCount,
+    stampStats,
     isLoading,
     isFailed
   }
 }
 
-export default useChannelMessageCount
+export default useChannelStats
