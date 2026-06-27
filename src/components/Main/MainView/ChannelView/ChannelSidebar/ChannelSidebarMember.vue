@@ -1,14 +1,25 @@
 <template>
-  <SidebarContentContainer title="メンバー">
-    <EmptyState v-if="isForceNotification"> 強制通知チャンネル </EmptyState>
-    <EmptyState v-else-if="!subscribers">
-      メンバーの取得に失敗しました
-    </EmptyState>
-    <ChannelSidebarMemberIcons
-      v-else-if="subscribers.size > 0"
-      :viewer-states="viewStates"
-    />
-    <EmptyState v-else> メンバーはいません </EmptyState>
+  <SidebarContentContainer
+    :title="title"
+    title-clickable
+    right-align
+    @toggle="toggle"
+  >
+    <SlideDown :is-open="isOpen">
+      <EmptyState v-if="isForceNotification">
+        Force Notification Channel
+      </EmptyState>
+      <div v-else-if="members.length > 0" :class="$style.members">
+        <div
+          v-for="member in members"
+          :key="member.id"
+          :class="[member.inactive && $style.inactive, $style.member]"
+        >
+          {{ member.name }}
+        </div>
+      </div>
+      <EmptyState v-else> No Subscribers </EmptyState>
+    </SlideDown>
   </SidebarContentContainer>
 </template>
 
@@ -17,13 +28,13 @@ import { computed } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
 import EmptyState from '/@/components/UI/EmptyState.vue'
+import SlideDown from '/@/components/UI/SlideDown.vue'
 import useChannelSubscribers from '/@/composables/subscription/useChannelSubscribers'
+import useToggle from '/@/composables/utils/useToggle'
 import { isDefined } from '/@/lib/basic/array'
 import { useChannelsStore } from '/@/store/entities/channels'
 import { useUsersStore } from '/@/store/entities/users'
 import type { ChannelId, UserId } from '/@/types/entity-ids'
-
-import ChannelSidebarMemberIcons from './ChannelSidebarMemberIcons.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -39,11 +50,13 @@ const { channelsMap } = useChannelsStore()
 const { activeUsersMap } = useUsersStore()
 
 const subscribers = useChannelSubscribers(props)
+const { value: isOpen, toggle } = useToggle(false)
 
 const isForceNotification = computed(
   () => channelsMap.value.get(props.channelId)?.force
 )
-const viewStates = computed(() =>
+const title = computed(() => `Subscribers: ${subscribers.value.size}`)
+const members = computed(() =>
   [...subscribers.value]
     .map(id => activeUsersMap.value.get(id))
     .filter(isDefined)
@@ -57,4 +70,31 @@ const viewStates = computed(() =>
 )
 </script>
 
-<style lang="scss" module></style>
+<style lang="scss" module>
+.members {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.member {
+  margin: 4px 0;
+  font-weight: bold;
+  text-align: right;
+  word-break: normal;
+  overflow-wrap: break-word; // for Safari
+  overflow-wrap: anywhere;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.inactive {
+  opacity: 0.5;
+}
+</style>
