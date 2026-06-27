@@ -1,5 +1,5 @@
 <template>
-  <SidebarContentContainer title="総メッセージ数">
+  <SidebarContentContainer right-align title="All Messages: ">
     <div :class="$style.content">
       <span
         v-if="!isMessageCountVisible"
