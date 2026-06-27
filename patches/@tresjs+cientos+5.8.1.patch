@@ -1,0 +1,55 @@
+diff --git a/node_modules/@tresjs/cientos/dist/trescientos.js b/node_modules/@tresjs/cientos/dist/trescientos.js
+index 7e208ff..cb2e8ba 100644
+--- a/node_modules/@tresjs/cientos/dist/trescientos.js
++++ b/node_modules/@tresjs/cientos/dist/trescientos.js
+@@ -5,7 +5,7 @@
+   * description: Collection of useful helpers and fully functional, ready-made abstractions for Tres
+   * author: Alvaro Saburido <hola@alvarosaburido.dev> (https://github.com/alvarosabu/)
+   */
+-import { Fragment, Suspense, Transition, computed, createBlock, createCommentVNode, createElementBlock, createElementVNode, createTextVNode, createVNode, defineComponent, inject, isReactive, isRef, mergeDefaults, mergeProps, nextTick, normalizeClass, normalizeProps, normalizeStyle, onBeforeUnmount, onMounted, onUnmounted, openBlock, provide, reactive, ref, render, renderList, renderSlot, shallowReactive, shallowRef, toDisplayString, toRaw, toRefs, toValue, triggerRef, unref, useAttrs, useSlots, useTemplateRef, vShow, watch, watchEffect, withAsyncContext, withCtx, withDirectives, withModifiers } from "vue";
++import { Fragment, Suspense, Transition, computed, createBlock, createCommentVNode, createElementBlock, createElementVNode, createTextVNode, createVNode, defineComponent, getCurrentInstance, inject, isReactive, isRef, mergeDefaults, mergeProps, nextTick, normalizeClass, normalizeProps, normalizeStyle, onBeforeUnmount, onMounted, onUnmounted, openBlock, provide, reactive, ref, render, renderList, renderSlot, shallowReactive, shallowRef, toDisplayString, toRaw, toRefs, toValue, triggerRef, unref, useAttrs, useSlots, useTemplateRef, vShow, watch, watchEffect, withAsyncContext, withCtx, withDirectives, withModifiers } from "vue";
+ import { buildGraph, createTimer, extend, isObject3D, logError, logWarning, normalizeColor, normalizeVectorFlexibleParam, useLoader, useLoop, useTres, useTresContext } from "@tresjs/core";
+ import * as THREE from "three";
+ import { AdditiveBlending, AlwaysStencilFunc, AnimationMixer, Audio, AudioListener, AudioLoader, BackSide, Box2, Box3, BoxGeometry, BufferAttribute, BufferGeometry, Camera, CatmullRomCurve3, ClampToEdgeWrapping, Color, CubeCamera, CubeReflectionMapping, CubeTextureLoader, CubicBezierCurve3, DataTexture, DefaultLoadingManager, DepthTexture, DirectionalLight, DoubleSide, EdgesGeometry, EqualStencilFunc, EquirectangularReflectionMapping, Euler, FloatType, FramebufferTexture, FrontSide, Group, HalfFloatType, IcosahedronGeometry, InstancedMesh, InterleavedBuffer, InterleavedBufferAttribute, KeepStencilOp, LOD, LinearFilter, MOUSE, MathUtils, Matrix4, Mesh, MeshBasicMaterial, MeshDepthMaterial, MeshLambertMaterial, MeshPhysicalMaterial, MeshStandardMaterial, NearestFilter, NoBlending, NoToneMapping, NotEqualStencilFunc, Object3D, OrthographicCamera, PerspectiveCamera, Plane, PlaneGeometry, Points, PointsMaterial, QuadraticBezierCurve3, Quaternion, REVISION, RGBAFormat, RawShaderMaterial, Raycaster, RepeatWrapping, ReplaceStencilOp, Scene, ShaderChunk, ShaderMaterial, ShapeGeometry, SkinnedMesh, Sphere, Spherical, TOUCH, TangentSpaceNormalMap, Texture, TextureLoader, UVMapping, Uniform, UniformsUtils, UnsignedByteType, Vector2, Vector3, Vector4, VideoTexture, WebGLCubeRenderTarget, WebGLRenderTarget, WebGLRenderer } from "three";
+@@ -11750,6 +11750,8 @@ var HTML_vue_vue_type_script_setup_true_lang_default = /* @__PURE__ */ defineCom
+ 		const props = __props;
+ 		const emits = __emit;
+ 		const slots = useSlots();
++		const __instance = getCurrentInstance();
++		const __mainAppCtx = __instance?.appContext?.app?._context ?? __instance?.appContext ?? null;
+ 		const { geometry, material, as, transform, portal, wrapperClass, eps, distanceFactor, fullscreen, center, pointerEvents, sprite, prepend, occlude, zIndexRange, castShadow, receiveShadow, transparentMaterial, calculatePosition: calculatePosition$1 } = toRefs(props);
+ 		const attrs = useAttrs();
+ 		const groupRef = shallowRef(null);
+@@ -11856,15 +11858,30 @@ var HTML_vue_vue_type_script_setup_true_lang_default = /* @__PURE__ */ defineCom
+ 			}
+ 			const parent = portal.value || r.domElement?.parentNode;
+ 			if (parent && !el.value.parentNode) prepend.value ? parent.prepend(el.value) : parent.appendChild(el.value);
++				const __slotContent = slots.default?.();
++			if (__mainAppCtx && __slotContent) {
++				const __applyCtx = (vnodes) => {
++					if (!vnodes) return;
++					for (const __vn of (Array.isArray(vnodes) ? vnodes : [vnodes])) {
++						if (!__vn || typeof __vn !== 'object') continue;
++						if (typeof __vn.type === 'object' || typeof __vn.type === 'function') {
++							__vn.appContext = __mainAppCtx;
++						} else if (__vn.children) {
++							__applyCtx(__vn.children);
++						}
++					}
++				};
++				__applyCtx(__slotContent);
++			}
+ 			vnode.value = transform.value ? createVNode("div", { style: styles.value }, [createVNode("div", { style: transformInnerStyles.value }, [createVNode("div", {
+ 				key: groupRef.value?.uuid,
+ 				class: attrs.class,
+ 				style: attrs.style
+-			}, slots.default?.())])]) : createVNode("div", {
++			}, __slotContent)])]) : createVNode("div", {
+ 				key: groupRef.value?.uuid,
+ 				style: styles.value,
+ 				class: attrs.class
+-			}, slots.default?.());
++			}, __slotContent);
+ 			render(vnode.value, el.value);
+ 		});
+ 		watchEffect(() => {

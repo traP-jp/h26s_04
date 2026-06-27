@@ -83,7 +83,7 @@ const useElementRenderObserver = (
     { flush: 'sync' }
   )
   watch(
-    () => route.path,
+    () => route?.path,
     () =>
       // パス変更でunobserve
       // vue-routerのインスタンス再利用対策

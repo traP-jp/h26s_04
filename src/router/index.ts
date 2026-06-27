@@ -117,7 +117,7 @@ const routes: RouteRecordRaw[] = [
     props: { type: 'consent' }
   },
   {
-    path: '/3d',
+    path: '/3d/:channel(.*)?',
     name: RouteName.ThreeD,
     component: () => import('/@/views/ThreeDPage.vue')
   },
