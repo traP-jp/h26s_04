@@ -15,14 +15,12 @@
       :class="$style.sidebarItem"
       :viewer-ids="viewerIds"
     />
-    <ChannelSidebarBots :channel-id="channelId" :class="$style.sidebarItem" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { ChannelId, UserId } from '/@/types/entity-ids'
 
-import ChannelSidebarBots from './ChannelSidebarBots.vue'
 import ChannelSidebarMember from './ChannelSidebarMember.vue'
 import ChannelSidebarMessageCount from './ChannelSidebarMessageCount.vue'
 import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
