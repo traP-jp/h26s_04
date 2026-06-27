@@ -40,7 +40,7 @@ messageMitt.on('addMessage', ({ message }) => {
   }, 6000)
 })
 
-messageMitt.on('deleteMessage', messageId => {
+messageMitt.on('deleteMessage', ({ messageId }) => {
   comments.value = comments.value.filter(v => v.id !== messageId)
 })
 
