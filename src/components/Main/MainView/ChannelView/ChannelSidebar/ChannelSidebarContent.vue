@@ -13,7 +13,15 @@
     />
     <ChannelSidebarTopic :class="$style.sidebarItem" :channel-id="channelId" />
     <ChannelSidebarMessageCount
-      :channel-id="channelId"
+      :total-message-count="totalMessageCount"
+      :is-loading="isLoading"
+      :is-failed="isFailed"
+      :class="$style.sidebarItem"
+    />
+    <ChannelSidebarStampStats
+      :stamp-stats="stampStats"
+      :is-loading="isLoading"
+      :is-failed="isFailed"
       :class="$style.sidebarItem"
     />
     <ChannelSidebarPinned
@@ -54,8 +62,10 @@ import ChannelSidebarMessageCount from './ChannelSidebarMessageCount.vue'
 import ChannelSidebarPinned from './ChannelSidebarPinned.vue'
 import ChannelSidebarQall from './ChannelSidebarQall.vue'
 import ChannelSidebarRelation from './ChannelSidebarRelation.vue'
+import ChannelSidebarStampStats from './ChannelSidebarStampStats.vue'
 import ChannelSidebarTopic from './ChannelSidebarTopic.vue'
 import ChannelSidebarViewers from './ChannelSidebarViewers.vue'
+import useChannelStats from './composables/useChannelStats'
 
 const isViewersDetailOpen = defineModel<boolean>('isViewersDetailOpen', {
   required: true
@@ -79,6 +89,8 @@ const emit = defineEmits<{
 }>()
 
 const { rooms: roomWithParticipants } = useQall()
+const { totalMessageCount, stampStats, isLoading, isFailed } =
+  useChannelStats(props)
 
 const qallUserIds = computed(
   () =>
