@@ -38,7 +38,7 @@ const { clearModal } = useModalStore()
 <style lang="scss" module>
 .container {
   @include background-primary;
-  opacity: 0.9;
+  opacity: 0.8;
   display: flex;
   flex-direction: column;
   width: calc(50% - 32px);

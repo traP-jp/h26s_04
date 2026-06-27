@@ -12,7 +12,9 @@
       />
     </div>
     <div :class="$style.messageContents">
-      <MarkdownContent v-show="!isEditing" :content="renderedContent" 
+      <MarkdownContent
+        v-show="!isEditing"
+        :content="renderedContent"
         :class="$style.markdownContent"
       />
       <MessageEditor

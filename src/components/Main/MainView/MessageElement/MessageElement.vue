@@ -9,12 +9,14 @@
       :data-is-entry="$boolAttr(isEntryMessage)"
       :data-is-editing="$boolAttr(isEditing)"
       :data-is-active="$boolAttr(isActive)"
+      :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
       @pointerenter="onPointerEnter"
-      @click="onClick"
+      @click="onBodyClick"
       @mouseleave="onMouseLeave"
     >
       <MessageTools
         v-model:is-active="isActive"
+        data-interactive-area
         :show="showMessageTools"
         :class="$style.tools"
         :message-id="messageId"
@@ -32,9 +34,7 @@
       >
         <div
           :class="$style.foldContent"
-          :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
           :data-is-message-folded="$boolAttr(isMessageActuallyFolded)"
-          @click="openMessageModal"
         >
           <div ref="foldContentInnerRef">
             <MessageContents
@@ -45,6 +45,7 @@
         </div>
       </div>
       <MessageStampList
+        data-interactive-area
         :show-detail-button="isHovered || isMobile"
         :message-id="messageId"
         :stamps="message.stamps"
@@ -130,7 +131,8 @@ const interactiveSelector = [
   'select',
   '[contenteditable="true"]',
   'audio',
-  'video'
+  'video',
+  '[data-interactive-area]'
 ].join(',')
 const isInteractiveTarget = (target: EventTarget | null) =>
   target instanceof Element && target.closest(interactiveSelector) !== null
@@ -155,8 +157,12 @@ useElementRenderObserver(
   emit
 )
 
-const { isHovered, onPointerEnter, onClick, onMouseLeave, onClickOutside } =
+const { isHovered, onPointerEnter, onMouseLeave, onClickOutside } =
   useMessageToolsHover()
+const onBodyClick = (e: MouseEvent) => {
+  isHovered.value = true
+  openMessageModal(e)
+}
 const showMessageTools = computed(
   () => (isHovered.value && !isEditing.value) || isActive.value
 )
@@ -187,6 +193,9 @@ $maskImage: linear-gradient(
   //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 4px;
   padding: 8px $messagePadding;
+  &[data-can-open-message-modal] {
+    cursor: zoom-in;
+  }
   &[data-is-mobile] {
     padding: 8px $messagePaddingMobile;
   }
@@ -211,10 +220,6 @@ $maskImage: linear-gradient(
 }
 
 .foldContent {
-  &[data-can-open-message-modal] {
-    cursor: zoom-in;
-  }
-
   &[data-is-message-folded] {
     max-height: $messageMaxHeight;
     overflow: hidden;
