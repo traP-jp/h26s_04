@@ -1,10 +1,16 @@
 <template>
   <SidebarContentContainer title="Stamp Statistics" right-align>
-    <EmptyState v-if="isFailed"> Failed to load stamp statistics </EmptyState>
-    <EmptyState v-else-if="stampStats === undefined && isLoading">
+    <p v-if="isFailed" :class="$style.status">
+      Failed to load stamp statistics
+    </p>
+    <p
+      v-else-if="stampStats === undefined && isLoading"
+      :class="$style.status"
+      aria-busy="true"
+    >
       Loading
-    </EmptyState>
-    <EmptyState v-else-if="totalStampCount === 0"> No stamps </EmptyState>
+    </p>
+    <p v-else-if="totalStampCount === 0" :class="$style.status">No stamps</p>
     <div v-else :class="$style.content">
       <p :class="$style.total">
         Total:
@@ -40,7 +46,6 @@ import type { ChannelStatsStamp } from '@traptitech/traq'
 import { computed } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import EmptyState from '/@/components/UI/EmptyState.vue'
 import { useStampsStore } from '/@/store/entities/stamps'
 
 import ChannelSidebarAnimatedNumber from './ChannelSidebarAnimatedNumber.vue'
@@ -82,6 +87,16 @@ const topStampViewStates = computed(() => {
   gap: 8px;
   width: 100%;
   text-align: right;
+}
+
+.status {
+  @include color-ui-secondary;
+  margin: 0;
+  font-weight: bold;
+  text-align: right;
+  word-break: normal;
+  overflow-wrap: break-word; // for Safari
+  overflow-wrap: anywhere;
 }
 
 .total {
