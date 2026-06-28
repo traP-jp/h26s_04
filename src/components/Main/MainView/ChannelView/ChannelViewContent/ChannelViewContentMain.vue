@@ -7,7 +7,10 @@
         <TresDirectionalLight :position="lightPos" :intensity="1" />
         <TresGroup :position="currentCenter">
           <TresGroup :scale="currentScaleVector">
-            <MessageSphere :key="messageSphereKey" :messages="displayMessages" />
+            <MessageSphere
+              :key="messageSphereKey"
+              :messages="displayMessages"
+            />
           </TresGroup>
           <ViewerSphere
             v-if="!isParentTransitioning"
@@ -123,14 +126,11 @@ const canvasContainerRef = shallowRef<HTMLDivElement>()
 const scrollerRef = canvasContainerRef as unknown as ReturnType<
   typeof shallowRef<MessageScrollerInstance | undefined>
 >
-const {
-  fetchLatestMessagesPreview,
-  isLoading,
-  messageIds
-} = useChannelMessageFetcher(scrollerRef, props, {
-  fetchLimit: RECENT_MESSAGE_LIMIT,
-  receiveIncomingMessages: true
-})
+const { fetchLatestMessagesPreview, isLoading, messageIds } =
+  useChannelMessageFetcher(scrollerRef, props, {
+    fetchLimit: RECENT_MESSAGE_LIMIT,
+    receiveIncomingMessages: true
+  })
 
 const { fetchMessage, getMessageRef } = useMessagesStore()
 const { renderMessageContent } = useMessagesView()
