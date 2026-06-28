@@ -24,13 +24,13 @@ import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import { useMessagesStore } from '/@/store/entities/messages'
-import type { ChannelId } from '/@/types/entity-ids'
+import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
 
 const props = defineProps<{
   channelId: ChannelId
-  entryMessageId?: string
+  entryMessageId?: MessageId
   pinnedMessages: Pin[]
 }>()
 
