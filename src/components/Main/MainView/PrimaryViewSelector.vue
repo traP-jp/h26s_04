@@ -16,6 +16,7 @@
     v-else-if="primaryView.type === 'clips'"
     :is-ready="isReady"
     :clip-folder-id="primaryView.clipFolderId"
+    :channel-id="channelId"
   />
   <NullView v-else />
 </template>
@@ -32,6 +33,7 @@ const { primaryView } = useMainViewStore()
 
 defineProps<{
   isReady: boolean
+  channelId: string
 }>()
 </script>
 

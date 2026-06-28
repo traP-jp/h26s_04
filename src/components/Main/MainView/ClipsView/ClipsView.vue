@@ -7,6 +7,7 @@
       <ClipsSidebar
         :clip-folder-id="clipFolderId"
         :is-sidebar-opener-ready="isReady"
+        :channel-id="channelId"
       />
     </template>
   </PrimaryViewFrame>
@@ -22,5 +23,6 @@ import ClipsViewContent from './ClipsViewContent/ClipsViewContent.vue'
 defineProps<{
   isReady: boolean
   clipFolderId: ClipFolderId
+  channelId: string
 }>()
 </script>

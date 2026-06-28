@@ -1,7 +1,7 @@
 <template>
   <PrimaryViewSidebarPage show-back-button @back="emit('moveBack')">
     <template #header>
-      <SidebarHeader text="ピン留め" />
+      <SidebarHeader channel-id="channelId" />
     </template>
     <template #content>
       <SidebarPinnedList :pinned-messages="pinnedMessages" />
@@ -20,6 +20,7 @@ import SidebarPinnedList from './SidebarPinned/SidebarPinnedList.vue'
 withDefaults(
   defineProps<{
     pinnedMessages?: Pin[]
+    channelId: string
   }>(),
   {
     pinnedMessages: () => []
