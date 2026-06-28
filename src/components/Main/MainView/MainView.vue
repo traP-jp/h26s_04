@@ -42,10 +42,8 @@ const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
 const route = useRoute()
 const channelId = computed(() => {
   const value = route.params['channelId'] ?? route.query['channelId']
-  return Array.isArray(value) ? value[0] : value
+  return (Array.isArray(value) ? value[0] : value) ?? ''
 })
-
-
 
 const isMounted = ref(false)
 onMounted(() => {
