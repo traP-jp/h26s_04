@@ -133,7 +133,7 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
   margin-top: 16px;
 }
 .markdownContent {
-  &[data-is-modal]{
+  &[data-is-modal] {
     margin: 32px 0 32px 0;
   }
   margin: 16px 0 16px 0;

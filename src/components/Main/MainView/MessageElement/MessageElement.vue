@@ -194,7 +194,7 @@ $maskImage: linear-gradient(
   margin: 6px 6px 6px 0;
   //border: 1px dashed rgba(255, 96, 160, 0.72);
   //border-radius: 44px;
-  padding-left:24px;
+  padding-left: 24px;
   &[data-is-modal] {
     padding: 8px $messagePadding;
     border: none;
