@@ -43,7 +43,11 @@ const emit = defineEmits<{
   height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
-  background: transparent;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 1) 100%
+  );
   font-family:
     'Monaspace Neon', 'Monaspace Argon', 'Monaspace Xenon', 'Monaspace Krypton',
     'Monaspace Radon', 'Monaspace', 'JetBrains Mono', 'Cascadia Code',

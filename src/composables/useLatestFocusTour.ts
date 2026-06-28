@@ -67,7 +67,12 @@ const _useLatestFocusTour = () => {
   // dirs は MessageSphere と同じ fibonacciSphere 順（index が 1:1 対応する）
   let dirs: Vector3[] = []
   let count = 0
-  let currentIndex = 0
+  // メッセージを createdAt 昇順に並べた id 列（末尾が最新）。表示順はシャッフルされ得るので、
+  // 配列の並びではなく createdAt で「最新」を判断する。
+  let order: string[] = []
+  let orderPos = 0
+  // 現在フォーカス中のメッセージ id（表示の再シャッフル/再レイアウト後も同じ投稿を追うため）
+  let focusedId: string | undefined
   let targetTheta = 0
   let targetPhi = Math.PI / 2
   let baseFov = 70
@@ -78,6 +83,16 @@ const _useLatestFocusTour = () => {
   let rafId = 0
   let dwellTimer = 0
 
+  const timeOf = (m: Message) => new Date(m.createdAt).getTime()
+
+  // createdAt 昇順の id 列と、現在件数・カード位置（dirs）を作り直す
+  const rebuildOrder = () => {
+    const msgs = registeredMessages.value
+    count = msgs.length
+    dirs = fibonacciSphere(count)
+    order = [...msgs].sort((a, b) => timeOf(a) - timeOf(b)).map(m => m.id)
+  }
+
   // カードの読み取り面（+Z）は球の外向き。外側から正面を見るには、カードと同じ半径方向の
   // 外側にカメラを置く（カメラは原点を向くので視線は中心ベクトルの逆向き＝カード正面を捉える）。
   const setTarget = (i: number) => {
@@ -87,16 +102,28 @@ const _useLatestFocusTour = () => {
     targetPhi = clampPhi(Math.acos(dir.y))
   }
 
+  // 指定 id のカード（現在の配列位置）へカメラ目標を向ける
+  const aimAtId = (id: string) => {
+    const i = registeredMessages.value.findIndex(m => m.id === id)
+    if (i >= 0) setTarget(i)
+  }
+
+  // order 内の位置 pos の投稿へフォーカスし直す（範囲外はクランプ）
+  const focusPos = (pos: number) => {
+    orderPos = Math.max(0, Math.min(order.length - 1, pos))
+    focusedId = order[orderPos]
+    if (focusedId) aimAtId(focusedId)
+    dwelling = false
+  }
+
   const advance = () => {
     if (!isPlaying.value) return
-    if (currentIndex >= count - 1) {
-      // 最新に到達。新しい投稿が来るまで待つ（messages 長さ変化の watch で再開する）
+    if (orderPos >= order.length - 1) {
+      // 最新に到達。新しい投稿が来るまで待つ（messages 変化の watch で再開する）
       waiting = true
       return
     }
-    currentIndex++ // 最新（新しい投稿）方向へ進む
-    setTarget(currentIndex)
-    dwelling = false
+    focusPos(orderPos + 1) // 最新（新しい投稿）方向へ進む
   }
 
   const frame = () => {
@@ -124,21 +151,17 @@ const _useLatestFocusTour = () => {
   }
 
   const start = () => {
-    const messages = registeredMessages.value
-    if (isPlaying.value || messages.length === 0) return
-    count = messages.length
-    dirs = fibonacciSphere(count)
+    if (isPlaying.value || registeredMessages.value.length === 0) return
+    rebuildOrder()
     baseFov = targetFov.value
     zoomFov = baseFov * ZOOM_FACTOR
     isPlaying.value = true
     // 再生中は useSkyCamera の自動回転・慣性を止め、カメラをこのループが駆動する。
     // dragging ではなく suspended を使う（dragging=true だとマウス移動だけでカメラが回ってしまう）
     suspended.value = true
-    // 「最新-3」から開始（投稿が4件未満なら先頭から）。ここから最新へ向けて進む
-    currentIndex = Math.max(0, count - 4)
-    setTarget(currentIndex)
-    dwelling = false
     waiting = false
+    // 「最新-3」から開始（投稿が4件未満なら先頭から）。ここから最新へ向けて進む
+    focusPos(order.length - 4)
     rafId = requestAnimationFrame(frame)
   }
 
@@ -160,27 +183,30 @@ const _useLatestFocusTour = () => {
     else start()
   }
 
-  // 再生中に messages が増減したら追従する。
+  // 再生中に messages が変化したら追従する（表示はシャッフル・上限カット・ライブ更新される）。
   // ・最新で待機中なら、新しく来た投稿（最新）へ向けて進む
-  // ・スクロール途中なら、球の再レイアウト（fibonacciSphere(n)）に合わせて現在の対象を再照準する
-  watch(
-    () => registeredMessages.value.length,
-    newCount => {
-      if (!isPlaying.value) return
-      if (newCount === 0) {
-        stop()
-        return
-      }
-      count = newCount
-      dirs = fibonacciSphere(count)
-      if (waiting) {
-        waiting = false
-        advance()
-      } else {
-        setTarget(currentIndex)
-      }
+  // ・スクロール途中なら、表示の再レイアウトに合わせて同じ投稿（focusedId）を追い続ける
+  // setMessages は毎回新しい配列を代入するので、ref 自体を watch すれば件数同数の入れ替えでも発火する。
+  watch(registeredMessages, () => {
+    if (!isPlaying.value) return
+    if (registeredMessages.value.length === 0) {
+      stop()
+      return
     }
-  )
+    rebuildOrder()
+    if (waiting) {
+      // 待機中に新しい投稿が来た：現在の最新位置から次（新着）へ進む
+      waiting = false
+      const p = focusedId ? order.indexOf(focusedId) : order.length - 1
+      orderPos = p >= 0 ? p : order.length - 1
+      advance()
+    } else if (focusedId) {
+      // スクロール中：表示の再レイアウトに合わせて同じ投稿を追い続ける
+      const p = order.indexOf(focusedId)
+      if (p >= 0) orderPos = p
+      aimAtId(focusedId)
+    }
+  })
 
   return { isPlaying, canPlay, setMessages, start, stop, toggle }
 }

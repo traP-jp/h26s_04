@@ -19,6 +19,7 @@
     >
       <MessageTools
         v-model:is-active="isActive"
+        data-interactive-area
         :show="showMessageTools"
         :class="$style.tools"
         :message-id="messageId"
@@ -44,6 +45,7 @@
             <MessageContents
               :class="$style.messageContents"
               :message-id="messageId"
+              :disable-fold="disableFold"
             />
           </div>
         </div>
@@ -53,6 +55,7 @@
         :message-id="messageId"
         :stamps="message.stamps"
         :is-archived="isArchived"
+        :disable-fold="disableFold"
       />
     </div>
   </ClickOutside>
@@ -142,7 +145,8 @@ const interactiveSelector = [
   '[role="button"]',
   '[data-message-interactive]',
   'audio',
-  'video'
+  'video',
+  '[data-interactive-area]'
 ].join(',')
 const isInteractiveTarget = (target: EventTarget | null) =>
   target instanceof Element && target.closest(interactiveSelector) !== null
@@ -189,8 +193,7 @@ const showMessageTools = computed(
 </script>
 
 <style lang="scss" module>
-$messagePadding: 32px;
-$messagePaddingMobile: 16px;
+$messagePadding: 0;
 $messageDebugWidth: 600px;
 $messageMaxHeight: 300px;
 $foldButtonHeight: 28px;
@@ -203,24 +206,26 @@ $maskImage: linear-gradient(
 
 .body {
   position: relative;
-  width: $messageDebugWidth;
-  max-width: calc(100% - 16px);
+  // 旧padding(上下8, 左右16)分をレイアウト幅に吸収して見た目を維持しつつ、
+  // 実際の外側paddingは0にする（折りたたみ判定の幅変化を抑える）
+  width: calc($messageDebugWidth - 32px);
+  max-width: calc(100% - 48px);
   min-width: 0;
   align-self: center;
   overflow: hidden;
   overflow: clip;
   margin: 6px auto;
-  border: 1px dashed rgba(255, 96, 160, 0.72);
+  //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 44px;
-  padding: 8px $messagePadding;
+  padding: 0;
   &[data-can-open-message-modal-on-body] {
     cursor: zoom-in;
   }
   &[data-is-modal] {
     border: none;
-  }
-  &[data-is-mobile] {
-    padding: 8px $messagePaddingMobile;
+    border-radius: 0;
+    margin: 6px 6px 6px 8px;
+    padding: 0 $messagePadding;
   }
   &[data-is-pinned] {
     background: $common-background-pin;

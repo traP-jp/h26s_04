@@ -91,7 +91,13 @@ $ephemeralNavigationMinHeight: 64px;
   display: flex;
   width: fit-content;
   height: 100%;
-  // background: var(--specific-navigation-bar-desktop-background);
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 .selector {
   display: flex;
