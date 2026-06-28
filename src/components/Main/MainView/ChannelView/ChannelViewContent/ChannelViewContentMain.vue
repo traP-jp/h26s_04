@@ -41,7 +41,7 @@
 import type { Pin } from '@traptitech/traq'
 import type { Message } from '@traptitech/traq'
 
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { TresCanvas } from '@tresjs/core'
@@ -107,10 +107,8 @@ const canvasContainerRef = shallowRef<HTMLDivElement>()
 const scrollerRef = canvasContainerRef as unknown as ReturnType<
   typeof shallowRef<MessageScrollerInstance | undefined>
 >
-const { fetchLatestMessagesPreview, messageIds } = useChannelMessageFetcher(
-  scrollerRef,
-  props
-)
+const { fetchLatestMessagesPreview, isLoading, messageIds } =
+  useChannelMessageFetcher(scrollerRef, props)
 
 const { getMessageRef } = useMessagesStore()
 const messages = computed(() =>
@@ -120,6 +118,7 @@ const messages = computed(() =>
 )
 const parentMessages = ref<Message[]>([])
 const messageOverride = ref<Message[] | null>(null)
+const messageOverrideChannelId = ref<ChannelId | null>(null)
 const displayMessages = computed(() => messageOverride.value ?? messages.value)
 const currentCenter = shallowRef(new Vector3())
 const currentScale = ref(CHANNEL_SCALE)
@@ -132,6 +131,9 @@ const parentTransitionChannelId = ref<ChannelId | null>(null)
 const parentTransitionSourceChannelId = ref<ChannelId | null>(null)
 const parentTransitionSourceAngle = ref<number>()
 const isParentTransitioning = ref(false)
+let parentTransitionToken = 0
+let pendingParentRouteChannelId: ChannelId | null = null
+let isUnmounted = false
 
 const resetParentTransitionPreview = () => {
   parentCenter.value = null
@@ -140,6 +142,14 @@ const resetParentTransitionPreview = () => {
   parentTransitionSourceChannelId.value = null
   parentTransitionSourceAngle.value = undefined
   parentScale.value = PARENT_TRANSITION_SCALE
+}
+
+const clearMessageOverride = () => {
+  messageOverride.value = null
+  messageOverrideChannelId.value = null
+  currentScale.value = CHANNEL_SCALE
+  cameraRadius.value = CAMERA_RADIUS
+  resetParentTransitionPreview()
 }
 
 const cameraRadiusForSphereScale = (scale: number) =>
@@ -237,9 +247,10 @@ const cubicBezier = (
 const animateParentTransition = (
   nextCenter: Vector3,
   arcControlPoint: Vector3,
-  settleControlPoint: Vector3
+  settleControlPoint: Vector3,
+  shouldContinue: () => boolean
 ) =>
-  new Promise<void>(resolve => {
+  new Promise<boolean>(resolve => {
     const start = performance.now()
     const fromFocus = focusTarget.value.clone()
     const fromScale = currentScale.value
@@ -251,6 +262,11 @@ const animateParentTransition = (
     const toTheta = fromTheta + PARENT_CAMERA_THETA_SWEEP
     const toCameraRadius = cameraRadiusForSphereScale(PARENT_TRANSITION_SCALE)
     const tick = (now: number) => {
+      if (!shouldContinue()) {
+        resolve(false)
+        return
+      }
+
       const t = Math.min(1, (now - start) / PARENT_TRANSITION_MS)
       const eased = smootherStep(t)
       const overview = Math.sin(Math.PI * eased) ** 2
@@ -280,6 +296,11 @@ const animateParentTransition = (
 
       if (t < 1) requestAnimationFrame(tick)
       else {
+        if (!shouldContinue()) {
+          resolve(false)
+          return
+        }
+
         focusTarget.value = nextCenter.clone()
         camPhi.value = PARENT_CAMERA_SIDE_PHI
         camTheta.value = toTheta
@@ -287,7 +308,7 @@ const animateParentTransition = (
         parentScale.value = PARENT_TRANSITION_SCALE
         targetFov.value = PARENT_TRANSITION_FOV
         cameraRadius.value = toCameraRadius
-        resolve()
+        resolve(true)
       }
     }
     requestAnimationFrame(tick)
@@ -297,9 +318,18 @@ const startParentTransition = async () => {
   if (isParentTransitioning.value) return
 
   const parent = getParentChannel()
-  if (!parent) return
+  if (!parent) {
+    targetFov.value = DEFAULT_FOV
+    return
+  }
 
+  const transitionToken = ++parentTransitionToken
+  const isCurrentTransition = () =>
+    !isUnmounted &&
+    transitionToken === parentTransitionToken &&
+    isParentTransitioning.value
   isParentTransitioning.value = true
+  pendingParentRouteChannelId = null
   const { arcControlPoint, nextCenter, settleControlPoint, sourceOffset } =
     getParentTransitionPath()
   parentCenter.value = nextCenter
@@ -314,42 +344,60 @@ const startParentTransition = async () => {
 
   try {
     const fetchedParentMessages = await fetchLatestMessagesPreview(parent.id)
+    if (!isCurrentTransition()) return
+
     parentMessages.value = fetchedParentMessages
 
-    await animateParentTransition(
+    const completed = await animateParentTransition(
       nextCenter,
       arcControlPoint,
-      settleControlPoint
+      settleControlPoint,
+      isCurrentTransition
     )
+    if (!completed || !isCurrentTransition()) return
 
     messageOverride.value = fetchedParentMessages
+    messageOverrideChannelId.value = parent.id
     currentCenter.value = nextCenter.clone()
     currentScale.value = CHANNEL_SCALE
     resetParentTransitionPreview()
+    pendingParentRouteChannelId = parent.id
     await router.push(constructChannelPath(parent.path))
   } catch {
-    resetParentTransitionPreview()
-    currentScale.value = CHANNEL_SCALE
-    cameraRadius.value = CAMERA_RADIUS
-    targetFov.value = DEFAULT_FOV
+    if (isCurrentTransition()) {
+      resetParentTransitionPreview()
+      currentScale.value = CHANNEL_SCALE
+      cameraRadius.value = CAMERA_RADIUS
+      targetFov.value = DEFAULT_FOV
+    }
   } finally {
-    isParentTransitioning.value = false
+    if (transitionToken === parentTransitionToken) {
+      pendingParentRouteChannelId = null
+      isParentTransitioning.value = false
+    }
   }
 }
 
 watch(targetFov, fov => {
-  if (fov < FOV_MAX) return
+  if (fov < FOV_MAX || isParentTransitioning.value) return
   void startParentTransition()
 })
 
 watch(
   () => props.channelId,
-  () => {
-    if (isParentTransitioning.value) return
+  channelId => {
+    if (isParentTransitioning.value) {
+      if (pendingParentRouteChannelId === channelId) return
+
+      parentTransitionToken++
+      pendingParentRouteChannelId = null
+      isParentTransitioning.value = false
+    }
 
     currentCenter.value = new Vector3()
     resetParentTransitionPreview()
     messageOverride.value = null
+    messageOverrideChannelId.value = null
     currentScale.value = CHANNEL_SCALE
     cameraRadius.value = CAMERA_RADIUS
     setFocusTarget(currentCenter.value)
@@ -358,16 +406,22 @@ watch(
   { immediate: true }
 )
 
-watch([messages, messageOverride], ([currentMessages, override]) => {
+watch([isLoading, messages], ([loading], [wasLoading]) => {
+  const override = messageOverride.value
   if (!override) return
-  if (currentMessages.length !== override.length) return
-  if (currentMessages.some((message, i) => message.id !== override[i]?.id)) {
+  if (props.channelId !== messageOverrideChannelId.value) return
+  if (loading) return
+  if (!wasLoading && messages.value.length === 0 && override.length > 0) {
     return
   }
-  messageOverride.value = null
-  currentScale.value = CHANNEL_SCALE
-  cameraRadius.value = CAMERA_RADIUS
-  resetParentTransitionPreview()
+
+  clearMessageOverride()
+})
+
+onBeforeUnmount(() => {
+  isUnmounted = true
+  parentTransitionToken++
+  pendingParentRouteChannelId = null
 })
 
 // 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
