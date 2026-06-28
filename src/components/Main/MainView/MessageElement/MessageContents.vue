@@ -3,6 +3,7 @@
     <span
       :class="$style.date"
       :title="message.createdAt !== message.updatedAt ? createdDate : undefined"
+      :data-is-modal="$boolAttr(disableFold)"
       >{{ date }}</span
     >
     <div :class="$style.header">
@@ -14,6 +15,7 @@
         v-show="!isEditing"
         :content="renderedContent"
         :class="$style.markdownContent"
+        :data-is-modal="$boolAttr(disableFold)"
       />
       <MessageEditor
         v-if="isEditing"
@@ -65,6 +67,7 @@ import MessageHeader from './MessageHeader.vue'
 
 const props = defineProps<{
   messageId: MessageId
+  disableFold?: boolean
 }>()
 
 const { getMessageRef } = useMessagesStore()
@@ -101,7 +104,10 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
 .date {
   @include color-ui-secondary;
   @include size-caption;
-  margin: 0 0 24px 0;
+  margin: 0 0 4px 0;
+  &[data-is-modal] {
+    margin: 0 0 24px 0;
+  }
 }
 
 .header {
@@ -127,6 +133,9 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
   margin-top: 16px;
 }
 .markdownContent {
-  margin-top: 32px;
+  &[data-is-modal]{
+    margin: 32px 0 32px 0;
+  }
+  margin: 16px 0 16px 0;
 }
 </style>

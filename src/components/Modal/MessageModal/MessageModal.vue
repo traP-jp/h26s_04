@@ -39,14 +39,15 @@ const { clearModal } = useModalStore()
 .container {
   @include background-primary;
   opacity: 0.85;
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
   position: absolute;
   bottom: 0;
   left: 5vw;
   width: calc(50% - 32px);
   max-width: 30vw;
   //max-height: calc(100% - 64px);
-  height: 60vh;
+  height: 75vh;
   border: {
     style: solid;
     width: 2px;
@@ -69,6 +70,8 @@ const { clearModal } = useModalStore()
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   width: 100%;
   overflow: {
     x: hidden;
