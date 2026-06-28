@@ -9,7 +9,6 @@
     </div>
     <LinkButtons
       :home-channel-id="detail?.homeChannel"
-      :user-name="user.name"
       :class="$style.buttons"
       show-title
     />

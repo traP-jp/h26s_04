@@ -13,7 +13,6 @@
     <LinkButtons
       :class="$style.buttons"
       :home-channel-id="detail?.homeChannel"
-      :user-name="user.name"
     />
   </section>
 </template>
