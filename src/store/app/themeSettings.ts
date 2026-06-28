@@ -22,11 +22,11 @@ const darkTheme = window.defaultDarkTheme
 
 const useThemeSettingsPinia = defineStore('ui/themeSettings', () => {
   const initialValue: State = {
-    type: 'auto',
+    type: 'dark',
     custom: lightTheme
   }
 
-  const [state] = useIndexedDbValue(
+  const [state, _restoring, restoringPromise] = useIndexedDbValue(
     'store/app/themeSettings',
     1,
     {
@@ -77,6 +77,12 @@ const useThemeSettingsPinia = defineStore('ui/themeSettings', () => {
     },
     initialValue
   )
+
+  const enforceDarkThemeOnStartup = async () => {
+    await restoringPromise
+    state.type = 'dark'
+  }
+  void enforceDarkThemeOnStartup()
 
   const queryList = window.matchMedia('(prefers-color-scheme: dark)')
   const isOsDarkTheme = ref(queryList.matches)
