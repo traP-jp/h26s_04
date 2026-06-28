@@ -1,6 +1,12 @@
 <template>
   <div :class="$style.container">
-    <div ref="canvasContainerRef" :class="$style.canvasContainer">
+    <div
+      ref="canvasContainerRef"
+      :class="$style.canvasContainer"
+      @pointerdown="onUserInteract"
+      @wheel="onUserInteract"
+      @click="onUserInteract"
+    >
       <TresCanvas clear-color="#00000000">
         <SkyCameraRig :radius="90" />
         <TresAmbientLight :intensity="1" />
@@ -19,7 +25,7 @@
 import type { Pin } from '@traptitech/traq'
 import type { Message } from '@traptitech/traq'
 
-import { computed, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, shallowRef, watch } from 'vue'
 
 import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
@@ -29,6 +35,7 @@ import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import useChannelPath from '/@/composables/useChannelPath'
+import { useLatestFocusTour } from '/@/composables/useLatestFocusTour'
 import { useOpenLink } from '/@/composables/useOpenLink'
 import { useSatelliteTransition } from '/@/composables/useSatelliteTransition'
 import { useMessagesStore } from '/@/store/entities/messages'
@@ -56,6 +63,21 @@ const messages = computed(() =>
     .map(id => getMessageRef(id).value)
     .filter((m): m is Message => m !== undefined)
 )
+
+// 「最新から順にフォーカス」モード（issue #66）。ヘッダーの再生ボタンから操作するため、
+// 現在の messages をここで共有コンポーザブルへ登録しておく。
+const { isPlaying, stop, setMessages } = useLatestFocusTour()
+watch(messages, m => setMessages(m), { immediate: true })
+// 再生中にユーザーがカード／衛星などへ触れたらモードを解除して通常操作へ返す
+const onUserInteract = () => {
+  if (isPlaying.value) stop()
+}
+// チャンネル離脱時に rAF / タイマーを後始末し、登録した messages も解除する
+// （非チャンネル画面ではツールバーの再生ボタンを出さないため）
+onBeforeUnmount(() => {
+  stop()
+  setMessages([])
+})
 
 // 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
 const { channelIdToLink } = useChannelPath()
