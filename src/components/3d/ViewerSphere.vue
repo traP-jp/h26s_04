@@ -68,8 +68,7 @@ const computeTargets = (n: number) =>
   })
 
 const setGroupRef =
-  (userId: UserId) =>
-  (el: Element | ComponentPublicInstance | null) => {
+  (userId: UserId) => (el: Element | ComponentPublicInstance | null) => {
     if (el) {
       const group = el as unknown as Group
       groups.set(userId, group)
