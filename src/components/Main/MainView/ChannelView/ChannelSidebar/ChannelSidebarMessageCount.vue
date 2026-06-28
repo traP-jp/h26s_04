@@ -139,5 +139,4 @@ const userViewStates = computed(() =>
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-
 </style>

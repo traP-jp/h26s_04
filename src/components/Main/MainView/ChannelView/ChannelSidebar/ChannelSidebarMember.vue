@@ -1,8 +1,5 @@
 <template>
-  <SidebarContentContainerFoldable
-    :title="title"
-    right-align
-  >
+  <SidebarContentContainerFoldable :title="title" right-align>
     <div v-if="isForceNotification" :class="$style.members">
       <div :class="$style.member">Force Notification</div>
     </div>

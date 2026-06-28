@@ -8,17 +8,10 @@
       :title="`Active: ${viewerIds.length}`"
     >
       <div :class="$style.viewers">
-        <div
-          v-for="user in viewers"
-          :key="user.id"
-          :class="$style.viewer"
-        >
+        <div v-for="user in viewers" :key="user.id" :class="$style.viewer">
           {{ user.displayName }}
         </div>
-        <div
-          v-if="viewers.length <= 0"
-          :class="[$style.viewer, $style.empty]"
-        >
+        <div v-if="viewers.length <= 0" :class="[$style.viewer, $style.empty]">
           No Active Viewers
         </div>
       </div>
