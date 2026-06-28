@@ -6,6 +6,7 @@
         <TresAmbientLight :intensity="1" />
         <TresDirectionalLight :position="lightPos" :intensity="1" />
         <MessageSphere :key="messageSphereKey" :messages="messages" />
+        <ViewerSphere :user-ids="activeViewingUsers" />
         <ChannelSatellites
           :channel-id="channelId"
           :select-channel="selectChannel"
@@ -19,7 +20,7 @@
 import type { Pin } from '@traptitech/traq'
 import type { Message } from '@traptitech/traq'
 
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
 import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
@@ -27,8 +28,10 @@ import { Vector3 } from 'three'
 import ChannelSatellites from '/@/components/3d/ChannelSatellites.vue'
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
+import ViewerSphere from '/@/components/3d/ViewerSphere.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import useChannelPath from '/@/composables/useChannelPath'
+import useCurrentViewers from '/@/composables/useCurrentViewers'
 import { useOpenLink } from '/@/composables/useOpenLink'
 import { useSatelliteTransition } from '/@/composables/useSatelliteTransition'
 import useMittListener from '/@/composables/utils/useMittListener'
@@ -46,6 +49,9 @@ const props = defineProps<{
   entryMessageId?: MessageId
   pinnedMessages: Pin[]
 }>()
+
+// 閲覧者をビルボードとして球の周囲に表示する（3D コンポーネントは channelId だけで自己完結）
+const { activeViewingUsers } = useCurrentViewers(toRef(props, 'channelId'))
 
 const lightPos = new Vector3(5, 5, 5)
 
