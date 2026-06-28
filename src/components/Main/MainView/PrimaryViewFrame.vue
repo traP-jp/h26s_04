@@ -1,8 +1,5 @@
 <template>
   <div :class="$style.container">
-    <teleport v-if="isReady" to="#header">
-      <slot name="header" />
-    </teleport>
     <div :class="$style.content">
       <slot />
     </div>

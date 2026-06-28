@@ -14,7 +14,6 @@
       :channel-id="channelId"
       :entry-message-id="entryMessageId"
       :pinned-messages="pinnedMessages"
-      :typing-users="typingUsers"
     />
   </div>
 </template>
@@ -28,7 +27,7 @@ import { debounce, throttle } from 'throttle-debounce'
 import { useRenderKey } from '/@/composables/dom/useRenderKey'
 import useMessageInputStateAttachment from '/@/composables/messageInputState/useMessageInputStateAttachment'
 import { useToastStore } from '/@/store/ui/toast'
-import type { ChannelId, UserId } from '/@/types/entity-ids'
+import type { ChannelId } from '/@/types/entity-ids'
 
 const { key: renderKey } = useRenderKey('messages')
 
@@ -103,7 +102,6 @@ const props = defineProps<{
   channelId: ChannelId
   entryMessageId?: ChannelId
   pinnedMessages: Pin[]
-  typingUsers: UserId[]
 }>()
 
 const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(

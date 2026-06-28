@@ -8,12 +8,6 @@
         <MessageSphere :messages="messages" />
       </TresCanvas>
     </div>
-    <MessageInput
-      :class="$style.input"
-      :channel-id="channelId"
-      :typing-users="typingUsers"
-      :show-to-new-message-button="false"
-    />
   </div>
 </template>
 
@@ -28,10 +22,9 @@ import { Vector3 } from 'three'
 
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
-import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import { useMessagesStore } from '/@/store/entities/messages'
-import type { ChannelId, UserId } from '/@/types/entity-ids'
+import type { ChannelId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
 
@@ -39,7 +32,6 @@ const props = defineProps<{
   channelId: ChannelId
   entryMessageId?: string
   pinnedMessages: Pin[]
-  typingUsers: UserId[]
 }>()
 
 const lightPos = new Vector3(5, 5, 5)
@@ -74,7 +66,4 @@ const messages = computed(() =>
   overflow: hidden;
 }
 
-.input {
-  flex-shrink: 0;
-}
 </style>

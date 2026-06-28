@@ -1,14 +1,10 @@
 <template>
   <PrimaryViewFrame :is-ready="isReady">
-    <template #header>
-      <DMHeader :user-name="userName" />
-    </template>
     <template #default>
       <ChannelViewContent
         :channel-id="channelId"
         :entry-message-id="entryMessageId"
         :pinned-messages="pinnedMessages"
-        :typing-users="typingUsers"
       />
     </template>
     <template #sidebar>
@@ -33,7 +29,6 @@ import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import ChannelViewContent from '../ChannelView/ChannelViewContent/ChannelViewContent.vue'
 import PrimaryViewFrame from '../PrimaryViewFrame.vue'
-import DMHeader from './DMHeader/DMHeader.vue'
 import DMSidebar from './DMSidebar/DMSidebar.vue'
 
 const props = defineProps<{
@@ -45,6 +40,5 @@ const props = defineProps<{
 
 const channelId = toRef(props, 'channelId')
 const pinnedMessages = usePinnedMessages(channelId)
-const { activeViewingUsers, inactiveViewingUsers, typingUsers } =
-  useCurrentViewers(channelId)
+const { activeViewingUsers, inactiveViewingUsers } = useCurrentViewers(channelId)
 </script>

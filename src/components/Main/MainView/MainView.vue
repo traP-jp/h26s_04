@@ -1,6 +1,5 @@
 <template>
   <div :class="$style.container">
-    <div id="header" :class="$style.headerContainer" />
     <div
       :class="$style.layoutContainer"
       :data-layout="layout"
@@ -57,11 +56,6 @@ onBeforeUnmount(() => {
 
 .iosPwaInfoLink {
   text-decoration: underline;
-}
-
-.headerContainer {
-  width: 100%;
-  z-index: $z-index-header;
 }
 
 .layoutContainer {
