@@ -13,7 +13,7 @@
 import type { Pin } from '@traptitech/traq'
 
 import { useRenderKey } from '/@/composables/dom/useRenderKey'
-import type { ChannelId } from '/@/types/entity-ids'
+import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import ChannelViewContentMain from './ChannelViewContentMain.vue'
 
@@ -21,7 +21,7 @@ const { key: renderKey } = useRenderKey('messages')
 
 defineProps<{
   channelId: ChannelId
-  entryMessageId?: ChannelId
+  entryMessageId?: MessageId
   pinnedMessages: Pin[]
 }>()
 </script>
@@ -37,10 +37,4 @@ defineProps<{
   background: transparent;
 }
 
-.header {
-  font: {
-    size: 30px;
-    weight: bold;
-  }
-}
 </style>
