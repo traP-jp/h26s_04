@@ -62,12 +62,14 @@ const { fetchMessage, getMessageRef } = useMessagesStore()
 const { renderMessageContent } = useMessagesView()
 const displayedMessageIds = ref<MessageId[]>([])
 
-function shuffle<T>(items: readonly T[]) {
+function shuffle(items: readonly MessageId[]) {
   const result = [...items]
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    const item = result[i]!
-    result[i] = result[j]!
+    const item = result[i]
+    const shuffledItem = result[j]
+    if (item === undefined || shuffledItem === undefined) continue
+    result[i] = shuffledItem
     result[j] = item
   }
   return result
