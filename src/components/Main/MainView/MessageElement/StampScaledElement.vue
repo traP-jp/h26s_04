@@ -14,6 +14,7 @@
           :stamp-id="stamp.id"
           :size="48"
           :class="$style.stamp"
+          use-original-image
           without-title
         />
       </transition>
