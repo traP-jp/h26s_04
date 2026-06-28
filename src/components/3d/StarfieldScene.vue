@@ -4,22 +4,22 @@ import { onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { useLoop } from '@tresjs/core'
 
-const STAR_COUNT = 4000
+const STAR_COUNT = 2000
 const STAR_RADIUS = 1000
 
 // 実際の恒星の色温度分布に近づけた重み付きパレット
 // w が大きいほど出現頻度が高い（青白・白が多く、赤が少ない）
 const PALETTE = [
-  { hex: 0x9db4ff, w: 8 },
+  { hex: 0x9db4ff, w: 1 },
   { hex: 0xaabfff, w: 11 },
   { hex: 0xcad7ff, w: 13 },
   { hex: 0xf6f6ff, w: 17 },
-  { hex: 0xffffff, w: 18 },
+  { hex: 0xffffff, w: 0 },
   { hex: 0xfff3e6, w: 13 },
   { hex: 0xffd8a8, w: 8 },
-  { hex: 0xffb56c, w: 6 },
-  { hex: 0xff9966, w: 4 },
-  { hex: 0xff7755, w: 2 }
+  { hex: 0xffb56c, w: 0 },
+  { hex: 0xff9966, w: 0 },
+  { hex: 0xff7755, w: 0 }
 ]
 const TOTAL_W = PALETTE.reduce((s, p) => s + p.w, 0)
 
