@@ -5,8 +5,8 @@ export const fibonacciSphere = (n: number) => {
   const goldenAngle = Math.PI * (3 - Math.sqrt(5)) // 黄金角（ラジアン）
 
   for (let i = 0; i < n; i++) {
-    // y を 1 から -1 まで、n個に均等分割して下げていく
-    const y = 1 - (i / (n - 1)) * 2
+    // 極に重ならないように、0.5 を足しておく
+    const y = 1 - ((i + 0.5) / n) * 2
     // その高さ(y)での「緯線」の半径
     const radiusAtY = Math.sqrt(1 - y * y)
     // 角度を黄金角ずつ進める
