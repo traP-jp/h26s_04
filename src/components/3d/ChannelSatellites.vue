@@ -19,7 +19,7 @@ import type { ChannelId } from '/@/types/entity-ids'
 const ORBIT_RADIUS = 100
 const SATELLITE_RADIUS = 4
 // 公転角速度（rad/s）
-const ORBIT_SPEED = 0.15
+const ORBIT_SPEED = 0.08
 // この距離（px）以上ポインタが動いたらドラッグ（カメラ回転）とみなし、遷移しない
 const CLICK_MOVE_THRESHOLD = 6
 // カメラ半径（ChannelViewContentMain の SkyCameraRig と一致させる）

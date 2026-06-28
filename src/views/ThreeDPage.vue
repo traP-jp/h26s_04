@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Message } from '@traptitech/traq'
 
-import { ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { TresCanvas } from '@tresjs/core'
@@ -10,7 +10,9 @@ import { Vector3 } from 'three'
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import StarfieldScene from '/@/components/3d/StarfieldScene.vue'
+import ViewerSphere from '/@/components/3d/ViewerSphere.vue'
 import useChannelPath from '/@/composables/useChannelPath'
+import useCurrentViewers from '/@/composables/useCurrentViewers'
 import { useSkyCamera } from '/@/composables/useSkyCamera'
 import apis from '/@/lib/apis'
 import { useChannelTree } from '/@/store/domain/channelTree'
@@ -31,6 +33,18 @@ const { extendMessagesMap } = useMessagesStore()
 const { renderMessageContent } = useMessagesView()
 
 const messages = ref<Message[]>([])
+
+// チャンネルツリー解決後にパス→IDを引き、閲覧者ビルボード用の reactive な channelId を作る
+const channelId = computed(() => {
+  const channelParam = route.params['channel'] as string
+  if (!channelParam || channelTree.value.children.length === 0) return ''
+  try {
+    return channelPathStringToId(channelParam)
+  } catch {
+    return ''
+  }
+})
+const { activeViewingUsers } = useCurrentViewers(channelId)
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 useInitialFetch(() => {})
@@ -77,6 +91,7 @@ watchEffect(async () => {
       <TresDirectionalLight :position="lightPos" :intensity="1" />
       <StarfieldScene />
       <MessageSphere :messages="messages" />
+      <ViewerSphere :user-ids="activeViewingUsers" />
     </TresCanvas>
   </div>
 </template>
