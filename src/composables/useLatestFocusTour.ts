@@ -9,7 +9,7 @@ import { useSkyCamera } from '/@/composables/useSkyCamera'
 import { fibonacciSphere } from '/@/lib/three/fibonacciSphere'
 
 // 寄り具合（大きいほど弱く寄る＝カードが小さく見える）
-const ZOOM_FACTOR = 0.8
+const ZOOM_FACTOR = 0.6
 // 毎フレーム目標へ詰める割合。小さいほどゆっくり滑って止まる（慣性が長く効く）
 const SMOOTH = 0.02
 // 1枚のカードを見せている滞留時間（ms）
