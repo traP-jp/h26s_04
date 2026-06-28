@@ -16,7 +16,8 @@ import type {
   ExternalUrl,
   FileId,
   MessageId,
-  StampId
+  StampId,
+  UserId
 } from '/@/types/entity-ids'
 
 export type StampStatsDiff = {
@@ -29,7 +30,11 @@ type MessageEventMap = {
   reconnect: void
   addMessage: { message: Message; isCiting: boolean }
   updateMessage: Message
-  deleteMessage: { messageId: MessageId; channelId?: ChannelId }
+  deleteMessage: {
+    messageId: MessageId
+    channelId?: ChannelId
+    userId?: UserId
+  }
   updateMessageStampStats: { channelId: ChannelId; diffs: StampStatsDiff[] }
   pinMessage: Message
   unpinMessage: MessageId
@@ -126,7 +131,11 @@ const useMessagesStorePinia = defineStore('entities/messages', () => {
       messageRef.value = undefined
     }
 
-    messageMitt.emit('deleteMessage', { messageId, channelId })
+    messageMitt.emit('deleteMessage', {
+      messageId,
+      channelId,
+      userId: message?.userId
+    })
   }
   const fetchMessage = async ({
     messageId,

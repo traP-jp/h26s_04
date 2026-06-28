@@ -1,5 +1,10 @@
 <template>
-  <div v-if="stamps.length > 0" :class="$style.stampWrapper" :data-is-modal="$boolAttr(disableFold)">
+  <div
+    v-if="stamps.length > 0"
+    :class="$style.stampWrapper"
+    data-message-interactive
+    :data-is-modal="$boolAttr(disableFold)"
+  >
     <AIcon
       v-if="showDetailButton"
       name="rounded-triangle"
@@ -125,9 +130,8 @@ $stamp-row-gap: 0.25rem;
 .stampWrapper {
   position: relative;
   margin-top: 8px;
-  margin-left:42px;
+  margin-left: 42px;
   &[data-is-modal] {
-    // モーダル時のスタイルをここに書く
     margin-left: 24px;
   }
 }

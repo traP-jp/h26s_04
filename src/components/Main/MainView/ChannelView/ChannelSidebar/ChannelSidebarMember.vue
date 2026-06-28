@@ -1,37 +1,28 @@
 <template>
-  <SidebarContentContainer
-    :title="title"
-    title-clickable
-    right-align
-    @toggle="toggle"
-  >
-    <SlideDown :is-open="isOpen">
-      <div v-if="isForceNotification" :class="$style.members">
-        <div :class="$style.member">Force Notification</div>
+  <SidebarContentContainerFoldable :title="title" right-align>
+    <div v-if="isForceNotification" :class="$style.members">
+      <div :class="$style.member">Force Notification</div>
+    </div>
+    <div v-else-if="members.length > 0" :class="$style.members">
+      <div
+        v-for="member in members"
+        :key="member.id"
+        :class="[member.inactive && $style.inactive, $style.member]"
+      >
+        {{ member.name }}
       </div>
-      <div v-else-if="members.length > 0" :class="$style.members">
-        <div
-          v-for="member in members"
-          :key="member.id"
-          :class="[member.inactive && $style.inactive, $style.member]"
-        >
-          {{ member.name }}
-        </div>
-      </div>
-      <div v-else :class="$style.members">
-        <div :class="$style.member">No Subscribers</div>
-      </div>
-    </SlideDown>
-  </SidebarContentContainer>
+    </div>
+    <div v-else :class="$style.members">
+      <div :class="$style.member">No Subscribers</div>
+    </div>
+  </SidebarContentContainerFoldable>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 
-import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import SlideDown from '/@/components/UI/SlideDown.vue'
+import SidebarContentContainerFoldable from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainerFoldable.vue'
 import useChannelSubscribers from '/@/composables/subscription/useChannelSubscribers'
-import useToggle from '/@/composables/utils/useToggle'
 import { isDefined } from '/@/lib/basic/array'
 import { useChannelsStore } from '/@/store/entities/channels'
 import { useUsersStore } from '/@/store/entities/users'
@@ -51,7 +42,6 @@ const { channelsMap } = useChannelsStore()
 const { usersMap } = useUsersStore()
 
 const subscribers = useChannelSubscribers(props)
-const { value: isOpen, toggle } = useToggle(false)
 
 const isForceNotification = computed(
   () => channelsMap.value.get(props.channelId)?.force
@@ -79,8 +69,8 @@ const members = computed(() =>
 }
 
 .member {
-  margin: 4px 0;
-  font-weight: bold;
+  margin: 2px 0;
+  font-weight: 400;
   text-align: right;
   word-break: normal;
   overflow-wrap: break-word; // for Safari

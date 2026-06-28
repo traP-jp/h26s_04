@@ -1,19 +1,17 @@
 <template>
   <div :class="$style.container">
     <div ref="canvasContainerRef" :class="$style.canvasContainer">
-      <TresCanvas>
-        <TresPerspectiveCamera :position="cameraPos" :look-at="[0, 0, 0]" />
+      <TresCanvas clear-color="#00000000">
+        <SkyCameraRig :radius="90" />
         <TresAmbientLight :intensity="1" />
         <TresDirectionalLight :position="lightPos" :intensity="1" />
         <MessageSphere :messages="messages" />
+        <ChannelSatellites
+          :channel-id="channelId"
+          :select-channel="selectChannel"
+        />
       </TresCanvas>
     </div>
-    <MessageInput
-      :class="$style.input"
-      :channel-id="channelId"
-      :typing-users="typingUsers"
-      :show-to-new-message-button="false"
-    />
   </div>
 </template>
 
@@ -26,22 +24,24 @@ import { computed, shallowRef } from 'vue'
 import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
 
+import ChannelSatellites from '/@/components/3d/ChannelSatellites.vue'
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
-import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
+import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
+import useChannelPath from '/@/composables/useChannelPath'
+import { useOpenLink } from '/@/composables/useOpenLink'
+import { useSatelliteTransition } from '/@/composables/useSatelliteTransition'
 import { useMessagesStore } from '/@/store/entities/messages'
-import type { ChannelId, UserId } from '/@/types/entity-ids'
+import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
 
 const props = defineProps<{
   channelId: ChannelId
-  entryMessageId?: string
+  entryMessageId?: MessageId
   pinnedMessages: Pin[]
-  typingUsers: UserId[]
 }>()
 
-const cameraPos = new Vector3(0, 0, 90)
 const lightPos = new Vector3(5, 5, 5)
 
 const canvasContainerRef = shallowRef<HTMLDivElement>()
@@ -56,6 +56,22 @@ const messages = computed(() =>
     .map(id => getMessageRef(id).value)
     .filter((m): m is Message => m !== undefined)
 )
+
+// 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
+const { channelIdToLink } = useChannelPath()
+const { openLink } = useOpenLink()
+const { playTransition } = useSatelliteTransition()
+const selectChannel = (
+  channelId: ChannelId,
+  event: PointerEvent,
+  focusAngle: number
+) => {
+  const link = channelIdToLink(channelId)
+  if (!link) return
+  // openLink の第3引数（router.push 直前のフック）で遷移演出を差し込めるようにしておく。
+  // focusAngle はクリックした衛星の向き（カメラを正対させてからズームインする）
+  openLink(event, link, () => playTransition(channelId, focusAngle))
+}
 </script>
 
 <style lang="scss" module>
@@ -72,9 +88,10 @@ const messages = computed(() =>
   flex: 1 1;
   width: 100%;
   overflow: hidden;
-}
-
-.input {
-  flex-shrink: 0;
+  // cientos <Html> のラベルは巨大な z-index（既定 16777271）を持つ。
+  // ここで stacking context を作り、その z-index を canvas 内に閉じ込めて
+  // ヘッダー/入力欄/サイドバー/モーダルより手前に出ないようにする。
+  position: relative;
+  isolation: isolate;
 }
 </style>

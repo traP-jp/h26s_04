@@ -10,7 +10,9 @@
       :data-is-editing="$boolAttr(isEditing)"
       :data-is-active="$boolAttr(isActive)"
       :data-is-modal="$boolAttr(disableFold)"
-      :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
+      :data-can-open-message-modal-on-body="
+        $boolAttr(canOpenMessageModalOnBody)
+      "
       @pointerenter="onPointerEnter"
       @click="onBodyClick"
       @mouseleave="onMouseLeave"
@@ -35,7 +37,9 @@
       >
         <div
           :class="$style.foldContent"
+          :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
           :data-is-message-folded="$boolAttr(isMessageActuallyFolded)"
+          @click="openMessageModal"
         >
           <div ref="foldContentInnerRef">
             <MessageContents
@@ -67,6 +71,7 @@ import ClickOutside from '/@/components/UI/ClickOutside'
 import useBoxSize from '/@/composables/dom/useBoxSize'
 import useEmbeddings from '/@/composables/message/useEmbeddings'
 import useResponsive from '/@/composables/useResponsive'
+import { toggleSpoiler } from '/@/lib/markdown/spoiler'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useMessageEditingStateStore } from '/@/store/ui/messageEditingStateStore'
 import { useModalStore } from '/@/store/ui/modal'
@@ -85,11 +90,13 @@ const props = withDefaults(
     isEntryMessage?: boolean
     isArchived?: boolean
     disableFold?: boolean
+    openModalOnBodyClick?: boolean
   }>(),
   {
     isEntryMessage: false,
     isArchived: false,
-    disableFold: false
+    disableFold: false,
+    openModalOnBodyClick: false
   }
 )
 
@@ -124,6 +131,9 @@ const isMessageActuallyFolded = computed(() => isMessageOversized.value)
 const canOpenMessageModal = computed(
   () => !props.disableFold && !isEditing.value
 )
+const canOpenMessageModalOnBody = computed(
+  () => props.openModalOnBodyClick && canOpenMessageModal.value
+)
 
 const interactiveSelector = [
   'a',
@@ -132,6 +142,8 @@ const interactiveSelector = [
   'textarea',
   'select',
   '[contenteditable="true"]',
+  '[role="button"]',
+  '[data-message-interactive]',
   'audio',
   'video',
   '[data-interactive-area]'
@@ -141,6 +153,14 @@ const isInteractiveTarget = (target: EventTarget | null) =>
 
 const { pushModal } = useModalStore()
 const openMessageModal = (e: MouseEvent) => {
+  // スポイラーのクリックはトグルのみ行い、モーダルは開かない。
+  // モーダル内（disable-fold で canOpenMessageModal=false）でも MessagesScroller の
+  // デリゲートに依存せずトグルできるよう、判定より前にここで処理する。
+  if (e.target instanceof HTMLElement && toggleSpoiler(e.target)) {
+    e.stopPropagation()
+    return
+  }
+
   if (!canOpenMessageModal.value || isInteractiveTarget(e.target)) return
 
   e.stopPropagation()
@@ -159,11 +179,13 @@ useElementRenderObserver(
   emit
 )
 
-const { isHovered, onPointerEnter, onMouseLeave, onClickOutside } =
+const { isHovered, onPointerEnter, onClick, onMouseLeave, onClickOutside } =
   useMessageToolsHover()
 const onBodyClick = (e: MouseEvent) => {
-  isHovered.value = true
-  openMessageModal(e)
+  onClick()
+  if (props.openModalOnBodyClick) {
+    openMessageModal(e)
+  }
 }
 const showMessageTools = computed(
   () => (isHovered.value && !isEditing.value) || isActive.value
@@ -195,14 +217,14 @@ $maskImage: linear-gradient(
   //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 44px;
   padding: 8px 16px;
+  &[data-can-open-message-modal-on-body] {
+    cursor: zoom-in;
+  }
   &[data-is-modal] {
     border: none;
     border-radius: 0;
     margin: 6px 6px 6px 8px;
     padding: 8px $messagePadding;
-  }
-  &[data-can-open-message-modal] {
-    cursor: zoom-in;
   }
   &[data-is-mobile] {
     padding: 8px $messagePaddingMobile;
@@ -228,6 +250,10 @@ $maskImage: linear-gradient(
 }
 
 .foldContent {
+  &[data-can-open-message-modal] {
+    cursor: zoom-in;
+  }
+
   &[data-is-message-folded] {
     max-height: $messageMaxHeight;
     overflow: hidden;

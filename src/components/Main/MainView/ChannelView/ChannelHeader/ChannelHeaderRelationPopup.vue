@@ -149,7 +149,7 @@ defineExpose({ focus })
 
 <style lang="scss" module>
 .popup {
-  @include background-primary;
+  background: transparent;
   @include drop-shadow-default;
   border-radius: 8px;
 

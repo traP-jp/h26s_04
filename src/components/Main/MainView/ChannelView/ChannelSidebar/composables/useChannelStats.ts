@@ -66,6 +66,45 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     }
   }
 
+  const updateUserMessageCount = (
+    userId: string,
+    getNextCount: (count: number) => number
+  ) => {
+    if (channelStats.value === undefined) {
+      requestFetch()
+      return
+    }
+
+    const users = [...channelStats.value.users]
+    const index = users.findIndex(user => user.id === userId)
+
+    if (index === -1) {
+      const messageCount = Math.max(0, getNextCount(0))
+      if (messageCount > 0) {
+        users.push({ id: userId, messageCount })
+      }
+    } else {
+      const currentUser = users[index]
+      if (currentUser === undefined) return
+
+      const nextUser = {
+        ...currentUser,
+        messageCount: Math.max(0, getNextCount(currentUser.messageCount))
+      }
+
+      if (nextUser.messageCount === 0) {
+        users.splice(index, 1)
+      } else {
+        users[index] = nextUser
+      }
+    }
+
+    channelStats.value = {
+      ...channelStats.value,
+      users
+    }
+  }
+
   const updateStampStats = (diffs: readonly StampStatsDiff[]) => {
     if (channelStats.value === undefined) {
       requestFetch()
@@ -123,8 +162,9 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     if (message.channelId !== props.channelId) return
 
     updateTotalMessageCount(count => count + 1)
+    updateUserMessageCount(message.userId, count => count + 1)
   })
-  useMittListener(messageMitt, 'deleteMessage', ({ channelId }) => {
+  useMittListener(messageMitt, 'deleteMessage', ({ channelId, userId }) => {
     if (channelId === undefined) {
       requestFetch()
       return
@@ -133,6 +173,11 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     if (channelId !== props.channelId) return
 
     updateTotalMessageCount(count => Math.max(0, count - 1))
+    if (userId === undefined) {
+      requestFetch()
+      return
+    }
+    updateUserMessageCount(userId, count => Math.max(0, count - 1))
   })
   useMittListener(
     messageMitt,
@@ -151,10 +196,12 @@ const useChannelStats = (props: { channelId: ChannelId }) => {
     () => channelStats.value?.totalMessageCount
   )
   const stampStats = computed(() => channelStats.value?.stamps)
+  const userStats = computed(() => channelStats.value?.users)
 
   return {
     totalMessageCount,
     stampStats,
+    userStats,
     isLoading,
     isFailed
   }
