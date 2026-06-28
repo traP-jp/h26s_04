@@ -15,7 +15,7 @@
       </TresCanvas>
       <QallAudio />
 
-      <PrimaryViewSelector :is-ready="isMounted" />
+      <PrimaryViewSelector :is-ready="isMounted" :channel-id="channelId" />
       <div id="sidebar-opener" :class="$style.hidden" />
       <SecondaryViewSelector v-if="layout !== 'single'" />
     </div>
@@ -23,7 +23,8 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { TresCanvas } from '@tresjs/core'
 
@@ -38,6 +39,13 @@ import SecondaryViewSelector from './SecondaryViewSelector.vue'
 
 const { layout } = useMainViewStore()
 const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
+const route = useRoute()
+const channelId = computed(() => {
+  const value = route.params['channelId'] ?? route.query['channelId']
+  return Array.isArray(value) ? value[0] : value
+})
+
+
 
 const isMounted = ref(false)
 onMounted(() => {

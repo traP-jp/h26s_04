@@ -1,7 +1,7 @@
 <template>
   <PrimaryViewSidebarPage show-back-button @back="emit('moveBack')">
     <template #header>
-      <SidebarHeader text="イベント" />
+      <SidebarHeader channel-id="channelId" />
     </template>
     <template #content>
       <div

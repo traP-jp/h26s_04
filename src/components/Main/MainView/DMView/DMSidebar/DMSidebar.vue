@@ -2,9 +2,7 @@
   <PrimaryViewSidebar :is-sidebar-opener-ready="isSidebarOpenerReady">
     <template #page>
       <PrimaryViewSidebarPage v-if="page === 'default'">
-        <template #header>
-          <SidebarHeader icon-string="@" :text="userName" />
-        </template>
+        <template #header> </template>
         <template #content>
           <SidebarContent
             :viewer-ids="activeViewingUsers"
@@ -18,6 +16,7 @@
       <SidebarPinnedPage
         v-else-if="page === 'pinned'"
         :pinned-messages="pinnedMessages"
+        :channel-id="channelId"
         @move-back="moveToDefaultPage"
       />
       <SidebarEventsPage
@@ -35,7 +34,6 @@ import type { Pin } from '@traptitech/traq'
 import PrimaryViewSidebar from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebar.vue'
 import PrimaryViewSidebarPage from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebarPage.vue'
 import SidebarEventsPage from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarEventsPage.vue'
-import SidebarHeader from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarHeader.vue'
 import SidebarPinnedPage from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarPinnedPage.vue'
 import useChannelSidebarCommon from '/@/components/Main/MainView/composables/useChannelSidebarCommon'
 import type { ChannelId, UserId } from '/@/types/entity-ids'

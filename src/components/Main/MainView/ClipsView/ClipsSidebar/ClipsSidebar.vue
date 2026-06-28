@@ -3,7 +3,11 @@
     <template #page>
       <PrimaryViewSidebarPage>
         <template #header>
-          <SidebarHeader icon-name="bookmark" icon-mdi :text="clipFolderName" />
+          <SidebarHeader
+            icon-name="bookmark"
+            icon-mdi
+            :channel-id="channelId"
+          />
         </template>
         <template #content>
           <ClipsSidebarContent :clip-folder-id="clipFolderId" />
@@ -14,23 +18,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
-
 import PrimaryViewSidebar from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebar.vue'
 import PrimaryViewSidebarPage from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebarPage.vue'
 import SidebarHeader from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarHeader.vue'
-import { useClipFoldersStore } from '/@/store/entities/clipFolders'
 import type { ClipFolderId } from '/@/types/entity-ids'
 
 import ClipsSidebarContent from './ClipsSidebarContent.vue'
 
-const props = defineProps<{
+defineProps<{
   clipFolderId: ClipFolderId
   isSidebarOpenerReady: boolean
+  channelId: string
 }>()
-
-const { clipFoldersMap } = useClipFoldersStore()
-const clipFolderName = computed(
-  () => clipFoldersMap.value.get(props.clipFolderId)?.name ?? ''
-)
 </script>
