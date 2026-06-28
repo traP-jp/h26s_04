@@ -40,5 +40,6 @@ const props = defineProps<{
 
 const channelId = toRef(props, 'channelId')
 const pinnedMessages = usePinnedMessages(channelId)
-const { activeViewingUsers, inactiveViewingUsers } = useCurrentViewers(channelId)
+const { activeViewingUsers, inactiveViewingUsers } =
+  useCurrentViewers(channelId)
 </script>

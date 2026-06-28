@@ -65,5 +65,4 @@ const messages = computed(() =>
   width: 100%;
   overflow: hidden;
 }
-
 </style>
