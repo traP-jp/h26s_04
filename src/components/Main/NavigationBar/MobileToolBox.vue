@@ -29,7 +29,7 @@ const { tools, isServicesShown, closeServices } = useToolBox()
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 $margin: 16px;

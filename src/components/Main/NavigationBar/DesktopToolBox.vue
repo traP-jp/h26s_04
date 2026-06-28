@@ -33,7 +33,7 @@ $header-width: 64px;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 8px 0;
 }
 .item {
