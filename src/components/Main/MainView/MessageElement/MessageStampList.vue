@@ -1,16 +1,23 @@
 <template>
-  <div v-if="stamps.length > 0" :class="$style.stampWrapper">
+  <div
+    v-if="stamps.length > 0"
+    :class="$style.stampWrapper"
+    data-message-interactive
+    :data-is-modal="$boolAttr(disableFold)"
+  >
     <AIcon
       v-if="showDetailButton"
       name="rounded-triangle"
       :size="20"
       :class="$style.toggleButton"
+      data-interactive-area
       :data-is-open="$boolAttr(isDetailShown)"
       @click="toggleDetail"
     />
     <div
       ref="listEle"
       :class="$style.stampList"
+      data-interactive-area
       :data-show-details="$boolAttr(isDetailShown)"
       :data-is-overflowing="$boolAttr(isStampListOverflowing)"
     >
@@ -71,10 +78,12 @@ const props = withDefaults(
     messageId: string
     showDetailButton?: boolean
     isArchived?: boolean
+    disableFold?: boolean
   }>(),
   {
     showDetailButton: false,
-    isArchived: false
+    isArchived: false,
+    disableFold: false
   }
 )
 
@@ -122,6 +131,9 @@ $stamp-row-gap: 0.25rem;
   position: relative;
   margin-top: 8px;
   margin-left: 42px;
+  &[data-is-modal] {
+    margin-left: 24px;
+  }
 }
 
 .toggleButton {

@@ -9,7 +9,7 @@ import { Matrix4, Quaternion, Vector3 } from 'three'
 import MessageElement from '/@/components/Main/MainView/MessageElement/MessageElement.vue'
 import { fibonacciSphere } from '/@/lib/three/fibonacciSphere'
 
-const SPHERE_RADIUS = 40
+const SPHERE_RADIUS = 32
 // 経線（上方向）を作るためのワールド上方向と、極での縮退時に使う代替参照軸
 const WORLD_UP = new Vector3(0, 1, 0)
 const FALLBACK_UP = new Vector3(0, 0, 1)
@@ -58,7 +58,7 @@ const quaternions = computed(() => {
   >
     <Html transform occlude :distance-factor="15">
       <div :class="$style.card">
-        <MessageElement :message-id="msg.id" />
+        <MessageElement :message-id="msg.id" open-modal-on-body-click />
       </div>
     </Html>
   </TresGroup>
@@ -71,6 +71,7 @@ const quaternions = computed(() => {
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
   padding: 4px;
   pointer-events: auto;
+  user-select: none;
   width: 320px;
 }
 </style>

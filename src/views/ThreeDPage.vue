@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Message } from '@traptitech/traq'
 
-import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { TresCanvas } from '@tresjs/core'
@@ -11,7 +11,9 @@ import { Vector3 } from 'three'
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import StarfieldScene from '/@/components/3d/StarfieldScene.vue'
+import ViewerSphere from '/@/components/3d/ViewerSphere.vue'
 import useChannelPath from '/@/composables/useChannelPath'
+import useCurrentViewers from '/@/composables/useCurrentViewers'
 import { FOV_MAX, useSkyCamera } from '/@/composables/useSkyCamera'
 import apis from '/@/lib/apis'
 import { useChannelTree } from '/@/store/domain/channelTree'
@@ -25,6 +27,7 @@ const FOV_MAX_RESTORE_MARGIN = 1
 const PARENT_TRANSITION_FOV = 72
 const PARENT_TRANSITION_MS = 850
 const PARENT_TRANSITION_OFFSET = 180
+const RECENT_MESSAGE_LIMIT = 48
 const constructThreeDPath = (channelPath: string) => `/3d/${channelPath}`
 
 const lightPos = new Vector3(5, 5, 5)
@@ -70,6 +73,18 @@ const toChannelPath = (param: unknown) => {
   return typeof param === 'string' ? param : ''
 }
 
+// チャンネルツリー解決後にパス→IDを引き、閲覧者ビルボード用の reactive な channelId を作る
+const currentChannelId = computed(() => {
+  const channelPath = toChannelPath(route.params['channel'])
+  if (!channelPath || channelTree.value.children.length === 0) return ''
+  try {
+    return channelPathStringToId(channelPath)
+  } catch {
+    return ''
+  }
+})
+const { activeViewingUsers } = useCurrentViewers(currentChannelId)
+
 const fetchMessagesByChannelPath = async (channelPath: string) => {
   if (channelTree.value.children.length === 0) {
     await fetchChannels()
@@ -78,7 +93,7 @@ const fetchMessagesByChannelPath = async (channelPath: string) => {
   const channelId = channelPathStringToId(channelPath)
   const res = await apis.getMessages(
     channelId,
-    50,
+    RECENT_MESSAGE_LIMIT,
     undefined,
     undefined,
     undefined,
@@ -238,6 +253,10 @@ onBeforeUnmount(() => {
       <StarfieldScene />
       <TresGroup :position="currentCenter">
         <MessageSphere :messages="messages" />
+        <ViewerSphere
+          v-if="!isParentTransitioning"
+          :user-ids="activeViewingUsers"
+        />
       </TresGroup>
       <TresGroup v-if="parentCenter" :position="parentCenter">
         <MessageSphere :messages="parentMessages" />
