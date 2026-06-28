@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.container">
-    <img :src="url" :class="$style.stamp" loading="lazy" />
+    <AStamp :stamp-id="stamp.id" :size="40" :class="$style.stamp" />
     <div :class="$style.innerContainer">
       <div :class="$style.textContainer">
         <p :class="$style.stampName">:{{ stamp.name }}:</p>
@@ -31,8 +31,8 @@ import type { Stamp } from '@traptitech/traq'
 import { computed } from 'vue'
 
 import AIcon from '/@/components/UI/AIcon.vue'
+import AStamp from '/@/components/UI/AStamp.vue'
 import useContextMenu from '/@/composables/useContextMenu'
-import { buildFilePath } from '/@/lib/apis'
 import { useUsersStore } from '/@/store/entities/users'
 
 import StampContextMenu from './StampContextMenu.vue'
@@ -51,8 +51,6 @@ const { usersMap } = useUsersStore()
 const creatorName = computed(
   () => usersMap.value.get(props.stamp.creatorId)?.name ?? 'unknown'
 )
-
-const url = computed(() => buildFilePath(props.stamp.fileId))
 
 const {
   position: contextMenuPosition,
