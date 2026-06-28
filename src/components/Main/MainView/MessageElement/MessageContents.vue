@@ -44,7 +44,11 @@
 
   <!-- Non-modal layout (original grid) -->
   <div v-else :class="$style.container">
-    <UserIcon :class="$style.userIconGrid" :user-id="message.userId" :size="40" />
+    <UserIcon
+      :class="$style.userIconGrid"
+      :user-id="message.userId"
+      :size="40"
+    />
     <MessageHeader
       :class="$style.messageHeaderGrid"
       :user-id="message.userId"
