@@ -5,7 +5,7 @@
         <SkyCameraRig :radius="90" />
         <TresAmbientLight :intensity="1" />
         <TresDirectionalLight :position="lightPos" :intensity="1" />
-        <MessageSphere :messages="messages" />
+        <MessageSphere :key="messageSphereKey" :messages="messages" />
         <ViewerSphere :user-ids="activeViewingUsers" />
         <ChannelSatellites
           :channel-id="channelId"
@@ -20,7 +20,7 @@
 import type { Pin } from '@traptitech/traq'
 import type { Message } from '@traptitech/traq'
 
-import { computed, shallowRef, toRef } from 'vue'
+import { computed, ref, shallowRef, toRef, watch } from 'vue'
 
 import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
@@ -34,10 +34,15 @@ import useChannelPath from '/@/composables/useChannelPath'
 import useCurrentViewers from '/@/composables/useCurrentViewers'
 import { useOpenLink } from '/@/composables/useOpenLink'
 import { useSatelliteTransition } from '/@/composables/useSatelliteTransition'
-import { useMessagesStore } from '/@/store/entities/messages'
+import useMittListener from '/@/composables/utils/useMittListener'
+import { wsListener } from '/@/lib/websocket'
+import { useMessagesView } from '/@/store/domain/messagesView'
+import { messageMitt, useMessagesStore } from '/@/store/entities/messages'
 import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
+
+const RECENT_MESSAGE_LIMIT = 48
 
 const props = defineProps<{
   channelId: ChannelId
@@ -54,14 +59,128 @@ const canvasContainerRef = shallowRef<HTMLDivElement>()
 const scrollerRef = canvasContainerRef as unknown as ReturnType<
   typeof shallowRef<MessageScrollerInstance | undefined>
 >
-const { messageIds } = useChannelMessageFetcher(scrollerRef, props)
+const { messageIds } = useChannelMessageFetcher(scrollerRef, props, {
+  fetchLimit: RECENT_MESSAGE_LIMIT,
+  receiveIncomingMessages: true
+})
 
-const { getMessageRef } = useMessagesStore()
+const { fetchMessage, getMessageRef } = useMessagesStore()
+const { renderMessageContent } = useMessagesView()
+const displayedMessageIds = ref<MessageId[]>([])
+
+function shuffle(items: readonly MessageId[]) {
+  const result = [...items]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const item = result[i]
+    const shuffledItem = result[j]
+    if (item === undefined || shuffledItem === undefined) continue
+    result[i] = shuffledItem
+    result[j] = item
+  }
+  return result
+}
+
+function insertAtRandomIndex<T>(items: T[], item: T) {
+  const index = Math.floor(Math.random() * (items.length + 1))
+  items.splice(index, 0, item)
+}
+
+const getCreatedAtTime = (messageId: MessageId) => {
+  const message = getMessageRef(messageId).value
+  if (!message) return Number.POSITIVE_INFINITY
+  return new Date(message.createdAt).getTime()
+}
+
+const getOldestMessageIndex = (ids: readonly MessageId[]) => {
+  let oldestIndex = 0
+  let oldestTime = Number.POSITIVE_INFINITY
+
+  ids.forEach((id, index) => {
+    const createdAtTime = getCreatedAtTime(id)
+    if (createdAtTime < oldestTime) {
+      oldestIndex = index
+      oldestTime = createdAtTime
+    }
+  })
+
+  return oldestIndex
+}
+
+const addDisplayedMessageId = (ids: MessageId[], addedId: MessageId) => {
+  if (ids.includes(addedId)) return
+
+  if (ids.length < RECENT_MESSAGE_LIMIT) {
+    insertAtRandomIndex(ids, addedId)
+    return
+  }
+
+  const oldestIndex = getOldestMessageIndex(ids)
+  ids.splice(oldestIndex, 1, addedId)
+}
+
+watch(
+  () => [...messageIds.value],
+  (ids, previousIds = []) => {
+    if (ids.length === 0) {
+      displayedMessageIds.value = []
+      return
+    }
+
+    const latestIds = ids.slice(-RECENT_MESSAGE_LIMIT)
+    if (previousIds.length === 0 || displayedMessageIds.value.length === 0) {
+      displayedMessageIds.value = shuffle(latestIds)
+      return
+    }
+
+    const idsSet = new Set(ids)
+    const previousIdsSet = new Set(previousIds)
+    const nextDisplayedIds = displayedMessageIds.value.filter(id =>
+      idsSet.has(id)
+    )
+    const addedIds = ids.filter(id => !previousIdsSet.has(id))
+
+    for (const addedId of addedIds) {
+      addDisplayedMessageId(nextDisplayedIds, addedId)
+    }
+
+    displayedMessageIds.value = nextDisplayedIds
+  },
+  { immediate: true }
+)
+
+const showIncomingMessage = async (message: Message) => {
+  if (message.channelId !== props.channelId) return
+
+  const nextDisplayedIds = [...displayedMessageIds.value]
+  addDisplayedMessageId(nextDisplayedIds, message.id)
+  displayedMessageIds.value = nextDisplayedIds
+
+  await renderMessageContent(message.id)
+}
+
+useMittListener(messageMitt, 'addMessage', async ({ message }) => {
+  await showIncomingMessage(message)
+})
+
+useMittListener(wsListener, 'MESSAGE_CREATED', async ({ id }) => {
+  const message = await fetchMessage({ messageId: id })
+  await showIncomingMessage(message)
+})
+
+watch(
+  () => props.channelId,
+  () => {
+    displayedMessageIds.value = []
+  }
+)
+
 const messages = computed(() =>
-  messageIds.value
+  displayedMessageIds.value
     .map(id => getMessageRef(id).value)
     .filter((m): m is Message => m !== undefined)
 )
+const messageSphereKey = computed(() => displayedMessageIds.value.join(':'))
 
 // 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
 const { channelIdToLink } = useChannelPath()

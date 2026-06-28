@@ -10,13 +10,14 @@
     />
     <span :class="$style.name">@{{ user?.name ?? 'unknown' }}</span>
     <span
+      v-if="createdAt"
       :class="$style.date"
       :title="createdAt !== updatedAt ? createdDate : undefined"
     >
       {{ date }}
     </span>
     <AIcon
-      v-if="createdAt !== updatedAt"
+      v-if="createdAt && createdAt !== updatedAt"
       :class="$style.editIcon"
       :size="16"
       name="pencil-outline"
@@ -40,8 +41,8 @@ import GradeBadge from './GradeBadge.vue'
 
 const props = defineProps<{
   userId: UserId
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }>()
 
 const { usersMap, fetchUser } = useUsersStore()
@@ -52,9 +53,11 @@ if (user.value === undefined) {
 }
 
 const createdDate = computed(() =>
-  getFullDayWithTimeString(new Date(props.createdAt))
+  props.createdAt ? getFullDayWithTimeString(new Date(props.createdAt)) : ''
 )
-const date = computed(() => getDateRepresentation(props.updatedAt))
+const date = computed(() =>
+  props.updatedAt ? getDateRepresentation(props.updatedAt) : ''
+)
 </script>
 
 <style lang="scss" module>

@@ -32,6 +32,8 @@ const { fetchChannels } = useChannelsStore()
 const { extendMessagesMap } = useMessagesStore()
 const { renderMessageContent } = useMessagesView()
 
+const RECENT_MESSAGE_LIMIT = 48
+
 const messages = ref<Message[]>([])
 
 // チャンネルツリー解決後にパス→IDを引き、閲覧者ビルボード用の reactive な channelId を作る
@@ -62,7 +64,7 @@ watchEffect(async () => {
   const channelId = channelPathStringToId(channelParam)
   const res = await apis.getMessages(
     channelId,
-    50,
+    RECENT_MESSAGE_LIMIT,
     undefined,
     undefined,
     undefined,

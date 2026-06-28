@@ -32,7 +32,11 @@ const useChannelMessageFetcher = (
   props: {
     channelId: ChannelId
     entryMessageId?: MessageId
-  }
+  },
+  options: {
+    fetchLimit?: number
+    receiveIncomingMessages?: boolean
+  } = {}
 ) => {
   const { extendMessagesMap } = useMessagesStore()
   const { renderMessageContent } = useMessagesView()
@@ -41,9 +45,10 @@ const useChannelMessageFetcher = (
     unreadChannelsMapInitialFetchPromise,
     deleteUnreadChannelWithSend
   } = useSubscriptionStore()
-  const { fetchLimit, waitHeightResolved } = useFetchLimit(
-    scrollerRef,
-    MESSAGE_HEIGHT
+  const { fetchLimit: heightBasedFetchLimit, waitHeightResolved } =
+    useFetchLimit(scrollerRef, MESSAGE_HEIGHT)
+  const fetchLimit = computed(
+    () => options.fetchLimit ?? heightBasedFetchLimit.value
   )
   const loadedMessageLatestDate = ref<Date>()
   const loadedMessageOldestDate = ref<Date>()
@@ -237,7 +242,12 @@ const useChannelMessageFetcher = (
 
   useMittListener(messageMitt, 'addMessage', ({ message }) => {
     if (props.channelId !== message.channelId) return
-    if (!messagesFetcher.isReachedLatest.value) return
+    if (
+      !options.receiveIncomingMessages &&
+      !messagesFetcher.isReachedLatest.value
+    ) {
+      return
+    }
 
     messagesFetcher.addNewMessage(message.id)
   })

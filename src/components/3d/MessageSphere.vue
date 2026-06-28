@@ -58,7 +58,7 @@ const quaternions = computed(() => {
   >
     <Html transform occlude :distance-factor="15">
       <div :class="$style.card">
-        <MessageElement :message-id="msg.id" />
+        <MessageElement :message-id="msg.id" open-modal-on-body-click />
       </div>
     </Html>
   </TresGroup>
@@ -71,6 +71,7 @@ const quaternions = computed(() => {
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
   padding: 4px;
   pointer-events: auto;
+  user-select: none;
   width: 320px;
 }
 </style>

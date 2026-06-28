@@ -54,9 +54,8 @@ const emit = defineEmits<{
 
 <style lang="scss" module>
 .container {
-  @include background-secondary;
   width: 100%;
-  padding: 16px;
+  padding: 16px 8px;
   display: flex;
 }
 .content {
@@ -74,7 +73,8 @@ const emit = defineEmits<{
   align-items: center;
   width: 100%;
   font: {
-    weight: bold;
+    weight: 200;
+    color: white;
     size: 1.125rem;
   }
 }
