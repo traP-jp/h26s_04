@@ -1,5 +1,5 @@
 <template>
-  <div :class="$style.container">
+  <div :class="$style.container" @wheel.stop>
     <div :class="$style.header">
       <AIcon
         v-if="showBackButton"
@@ -42,6 +42,7 @@ const emit = defineEmits<{
   width: 320px;
   height: 100%;
   overflow: auto;
+  overscroll-behavior: contain;
   background: transparent;
   font-family:
     'Monaspace Neon', 'Monaspace Argon', 'Monaspace Xenon', 'Monaspace Krypton',
@@ -78,6 +79,7 @@ const emit = defineEmits<{
     x: hidden;
     y: auto;
   }
+  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 </style>

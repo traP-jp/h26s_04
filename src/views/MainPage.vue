@@ -12,11 +12,14 @@
     @touchcancel="touchendHandler"
   >
     <div :class="$style.homeContainer">
-      <NavigationBar v-show="shouldShowNav" :class="$style.navigationWrapper" />
+      <NavigationBar
+        v-show="shouldShowNav"
+        :class="$style.navigationWrapper"
+        :style="styles.navigationWrapper"
+      />
       <MainViewFrame
         v-if="routeWatcherState.view === 'main'"
         :is-active="isMainViewActive"
-        :hide-outer="hideOuter"
         :dim-inner="isSidebarCompletelyAppeared"
         :class="$style.mainViewWrapper"
         :style="styles.mainViewWrapper"
@@ -55,11 +58,18 @@ import useRouteWatcher from './composables/useRouteWatcher'
 
 const useStyles = (
   mainViewPosition: Readonly<Ref<number>>,
-  sidebarPosition: Readonly<Ref<number>>
+  sidebarPosition: Readonly<Ref<number>>,
+  navWidth: number,
+  isMobile: Readonly<Ref<boolean>>
 ) =>
   reactive({
+    navigationWrapper: computed(() => ({
+      transform: isMobile.value
+        ? `translateX(${mainViewPosition.value - navWidth}px)`
+        : 'translateX(0)'
+    })),
     mainViewWrapper: computed(() => ({
-      transform: `translateX(${mainViewPosition.value}px)`
+      transform: 'translateX(0)'
     })),
     sidebarWrapper: computed(() => ({
       transform: `translateX(${sidebarPosition.value}px)`
@@ -133,9 +143,6 @@ useCommandPaletteShortcutKey()
 const { isMobile } = useResponsive()
 const shouldShowNav = computed(() => !isMobile.value || isNavAppeared.value)
 const { closeNav } = useNavigationController()
-const hideOuter = computed(
-  () => isMobile.value && isNavCompletelyAppeared.value
-)
 
 const { routeWatcherState, triggerRouteParamChange } = useRouteWatcher()
 useInitialFetch(() => {
@@ -150,7 +157,7 @@ useInitialFetch(() => {
   triggerRouteParamChange()
 })
 
-const styles = useStyles(mainViewPosition, sidebarPosition)
+const styles = useStyles(mainViewPosition, sidebarPosition, navWidth, isMobile)
 
 const onClickMainViewFrame = (e: MouseEvent) => {
   if (!isMobile.value || !isNavCompletelyAppeared.value) {
@@ -172,6 +179,7 @@ useViewStateSender()
   height: 100%;
   display: flex;
   [data-is-mobile] & {
+    background: transparent;
     position: relative;
   }
 }
@@ -183,6 +191,7 @@ useViewStateSender()
     top: 0;
     left: 0;
     width: 320px;
+    will-change: transform;
   }
 }
 .mainViewWrapper {
@@ -190,7 +199,7 @@ useViewStateSender()
   flex: 1;
 }
 .sidebarWrapper {
-  @include background-secondary;
+  background: transparent;
   position: absolute;
   top: 0;
   left: 100%;
