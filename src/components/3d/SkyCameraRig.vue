@@ -10,9 +10,10 @@ const props = withDefaults(defineProps<{ radius?: number }>(), {
   radius: 15
 })
 
-const { camPositionAt, targetFov } = useSkyCamera()
+const { camPositionAt, focusTarget, targetFov } = useSkyCamera()
 
 const camRef = shallowRef<PerspectiveCamera>()
+let renderedRadius = props.radius
 
 const { onBeforeRender } = useLoop()
 // カメラ状態の前進（tick）は useSkyCamera 内の単一ループが担当。
@@ -21,8 +22,14 @@ onBeforeRender(() => {
   const cam = camRef.value
   if (!cam) return
 
-  cam.position.copy(camPositionAt(props.radius))
-  cam.lookAt(0, 0, 0)
+  if (Math.abs(renderedRadius - props.radius) > 0.01) {
+    renderedRadius += (props.radius - renderedRadius) * 0.12
+  } else {
+    renderedRadius = props.radius
+  }
+
+  cam.position.copy(camPositionAt(renderedRadius))
+  cam.lookAt(focusTarget.value)
 
   if (Math.abs(cam.fov - targetFov.value) > 0.01) {
     cam.fov += (targetFov.value - cam.fov) * 0.12

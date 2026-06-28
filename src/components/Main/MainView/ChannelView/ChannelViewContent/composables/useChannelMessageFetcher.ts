@@ -174,6 +174,18 @@ const useChannelMessageFetcher = (
     return messagesAsc.map(message => message.id)
   }
 
+  const fetchLatestMessagesPreview = async (channelId: ChannelId) => {
+    await waitHeightResolved
+    const { messages: messagesDesc } = await fetchMessagesByChannelId({
+      channelId,
+      limit: fetchLimit.value,
+      order: 'desc'
+    })
+    const messagesAsc = messagesDesc.toReversed()
+    await Promise.all(messagesAsc.map(msg => renderMessageContent(msg.id)))
+    return messagesAsc
+  }
+
   const onReachedLatest = async () => {
     // 未読を取得していないと未読を表示できないため
     await unreadChannelsMapInitialFetchPromise
@@ -259,6 +271,7 @@ const useChannelMessageFetcher = (
 
   return {
     ...messagesFetcher,
+    fetchLatestMessagesPreview,
     unreadSince
   }
 }
