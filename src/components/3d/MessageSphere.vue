@@ -9,7 +9,7 @@ import { Matrix4, Quaternion, Vector3 } from 'three'
 import MessageElement from '/@/components/Main/MainView/MessageElement/MessageElement.vue'
 import { fibonacciSphere } from '/@/lib/three/fibonacciSphere'
 
-const SPHERE_RADIUS = 40
+const SPHERE_RADIUS = 32
 // 経線（上方向）を作るためのワールド上方向と、極での縮退時に使う代替参照軸
 const WORLD_UP = new Vector3(0, 1, 0)
 const FALLBACK_UP = new Vector3(0, 0, 1)
