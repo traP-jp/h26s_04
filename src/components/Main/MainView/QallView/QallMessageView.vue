@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed, nextTick, ref, shallowRef } from 'vue'
 
-import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
 import MessagesScroller, {
   type MessageScrollerInstance
 } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
@@ -10,14 +9,13 @@ import IconButton from '/@/components/UI/IconButton.vue'
 import { unrefElement } from '/@/lib/dom/unrefElement'
 import { useSubscriptionStore } from '/@/store/domain/subscription'
 import { useChannelsStore } from '/@/store/entities/channels'
-import type { ChannelId, UserId } from '/@/types/entity-ids'
+import type { ChannelId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from '../ChannelView/ChannelViewContent/composables/useChannelMessageFetcher'
 import MessageElement from '../MessageElement/MessageElement.vue'
 
 const props = defineProps<{
   channelId: ChannelId
-  typingUsers: UserId[]
 }>()
 
 const isMessageShow = ref(false)
@@ -133,12 +131,6 @@ const handleScroll = () => {
       </div>
       <slot name="default" />
     </div>
-    <MessageInput
-      :channel-id="channelId"
-      :typing-users="typingUsers"
-      :show-to-new-message-button="false"
-      force-mobile-style
-    />
   </div>
 </template>
 
