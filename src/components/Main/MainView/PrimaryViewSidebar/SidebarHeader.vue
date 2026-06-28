@@ -32,7 +32,6 @@ withDefaults(
 <style lang="scss" module>
 .title {
   @include color-ui-primary;
-  @include size-h2;
   display: flex;
   align-items: center;
   flex: 1;
@@ -40,10 +39,13 @@ withDefaults(
   // 中身のtext-overflow: ellipsis用
   min-width: 0;
   justify-content: flex-end;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .icon {
-  margin-right: 16px;
+  margin-right: 6px;
   flex-shrink: 0;
 }
 

@@ -62,14 +62,14 @@ const onContainerClick = () => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 12px;
-  border-radius: 4px;
+  padding: 6px 4px;
+  border-radius: 0;
   flex-shrink: 0;
   &[data-is-clickable] {
     cursor: pointer;
   }
   &[data-is-large-padding] {
-    padding: 16px;
+    padding: 8px 4px;
   }
   background-color: transparent;
 }
@@ -78,7 +78,8 @@ const onContainerClick = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 4px;
   &[data-is-clickable] {
     cursor: pointer;
   }
@@ -90,8 +91,9 @@ const onContainerClick = () => {
 }
 
 .headerTitle {
-  @include size-body1;
-  font-weight: bold;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .headerRightAlign {

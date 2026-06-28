@@ -8,6 +8,7 @@
     />
     <ChannelSidebarMessageCount
       :total-message-count="totalMessageCount"
+      :user-stats="userStats"
       :is-loading="isLoading"
       :is-failed="isFailed"
       :class="$style.sidebarItem"
@@ -46,13 +47,13 @@ const props = defineProps<{
   pinnedMessagesCount?: number
 }>()
 
-const { totalMessageCount, stampStats, isLoading, isFailed } =
+const { totalMessageCount, stampStats, userStats, isLoading, isFailed } =
   useChannelStats(props)
 </script>
 
 <style lang="scss" module>
 .sidebarItem {
-  margin: 16px 0;
+  margin: 8px 0;
   &:first-child {
     margin-top: 0;
   }
@@ -63,7 +64,7 @@ const { totalMessageCount, stampStats, isLoading, isFailed } =
 }
 
 .edit {
-  margin: 24px 0;
+  margin: 16px 0;
   flex: 1;
   align-items: flex-end;
 }

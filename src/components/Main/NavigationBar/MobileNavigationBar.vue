@@ -6,11 +6,12 @@
     "
   >
     <MobileToolBox :class="$style.toolBox" />
-    <div :class="$style.content">
-      <NavigationContent
-        :current-navigation="navigationSelectorState.currentNavigation"
-      />
-    </div>
+    <ChannelTreeComponent
+      :id="allPanelId"
+      :class="$style.content"
+      :channels="topLevelChannels"
+      role="tabpanel"
+    />
     <div
       v-if="ephemeralNavigationSelectorState.currentNavigation"
       :class="$style.ephemeralContent"
@@ -22,37 +23,35 @@
         "
       />
     </div>
-    <div :class="$style.selector">
-      <NavigationSelector
-        :current-navigation="navigationSelectorState.currentNavigation"
-        :current-ephemeral-navigation="
-          ephemeralNavigationSelectorState.currentNavigation
-        "
-        @navigation-change="onNavigationChange"
-        @ephemeral-navigation-change="onEphemeralNavigationChange"
-        @ephemeral-entry-remove="onEphemeralEntryRemove"
-        @ephemeral-entry-add="onEphemeralEntryAdd"
-      />
-    </div>
   </nav>
 </template>
 
 <script lang="ts" setup>
-import EphemeralNavigationContent from '/@/components/Main/NavigationBar/EphemeralNavigationContent/EphemeralNavigationContent.vue'
-import NavigationSelector from '/@/components/Main/NavigationBar/MobileNavigationSelector.vue'
-import MobileToolBox from '/@/components/Main/NavigationBar/MobileToolBox.vue'
-import NavigationContent from '/@/components/Main/NavigationBar/NavigationContent.vue'
+import { computed, toRaw } from 'vue'
 
+import EphemeralNavigationContent from '/@/components/Main/NavigationBar/EphemeralNavigationContent/EphemeralNavigationContent.vue'
+import MobileToolBox from '/@/components/Main/NavigationBar/MobileToolBox.vue'
+import { randomString } from '/@/lib/basic/randomString'
+import { filterTrees } from '/@/lib/basic/tree'
+import { useBrowserSettings } from '/@/store/app/browserSettings'
+import { useChannelTree } from '/@/store/domain/channelTree'
+
+import ChannelTreeComponent from './ChannelList/ChannelTree.vue'
 import useNavigation from './composables/useNavigation'
 
-const {
-  navigationSelectorState,
-  ephemeralNavigationSelectorState,
-  onNavigationChange,
-  onEphemeralNavigationChange,
-  onEphemeralEntryRemove,
-  onEphemeralEntryAdd
-} = useNavigation()
+const { ephemeralNavigationSelectorState } = useNavigation()
+
+const allPanelId = randomString()
+
+const { channelTree } = useChannelTree()
+const { showArchivedChannels } = useBrowserSettings()
+
+const topLevelChannels = computed(() =>
+  filterTrees(
+    toRaw(channelTree.value.children),
+    channel => showArchivedChannels.value || !channel.archived
+  )
+)
 </script>
 
 <style lang="scss" module>
@@ -60,52 +59,40 @@ const {
   display: grid;
   grid-template:
     'toolbox' min-content
-    'content' 1fr
-    'selector' 60px;
-  row-gap: 16px;
+    'content' 1fr;
+  row-gap: 8px;
   width: 100%;
   height: 100%;
-  padding: 16px;
-  background: var(--specific-navigation-bar-mobile-background);
+  padding: 8px 0;
+  background: transparent;
   &[data-has-ephemeral-content] {
     grid-template:
       'toolbox' min-content
       'content' 2fr
-      'ephemeral-content' auto
-      'selector' 60px;
+      'ephemeral-content' auto;
   }
 }
 .toolBox,
-.content,
-.ephemeralContent,
-.selector {
+.ephemeralContent {
   border-radius: 4px;
   overflow: hidden;
 }
 .toolBox {
   grid-area: toolbox;
+  padding: 0 16px;
 }
 .content {
-  @include background-secondary;
   grid-area: content;
-  padding-left: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
 }
 .ephemeralContent {
-  @include background-secondary;
   grid-area: ephemeral-content;
   padding: {
     top: 4px;
     left: 4px;
     right: 4px;
   }
-}
-.selector {
-  @include background-secondary;
-  grid-area: selector;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0 16px;
-  flex-shrink: 0;
 }
 </style>
