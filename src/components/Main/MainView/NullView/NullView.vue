@@ -15,7 +15,7 @@ import AIcon from '/@/components/UI/AIcon.vue'
   justify-content: center;
   align-items: center;
   height: 100%;
-  background: var(--specific-main-view-background);
+  background: transparent;
 }
 
 .logo {

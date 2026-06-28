@@ -8,7 +8,10 @@ import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
 
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
+import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
+import StarfieldScene from '/@/components/3d/StarfieldScene.vue'
 import useChannelPath from '/@/composables/useChannelPath'
+import { useSkyCamera } from '/@/composables/useSkyCamera'
 import apis from '/@/lib/apis'
 import { useChannelTree } from '/@/store/domain/channelTree'
 import { useMessagesView } from '/@/store/domain/messagesView'
@@ -16,8 +19,9 @@ import { useChannelsStore } from '/@/store/entities/channels'
 import { useMessagesStore } from '/@/store/entities/messages'
 import useInitialFetch from '/@/views/composables/useInitialFetch'
 
-const cameraPos = new Vector3(0, 0, 90)
 const lightPos = new Vector3(5, 5, 5)
+
+const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
 
 const route = useRoute()
 const { channelPathStringToId } = useChannelPath()
@@ -59,11 +63,19 @@ watchEffect(async () => {
 </script>
 
 <template>
-  <div style="width: 100vw; height: 100vh">
-    <TresCanvas>
-      <TresPerspectiveCamera :position="cameraPos" :look-at="[0, 0, 0]" />
+  <div
+    style="width: 100vw; height: 100vh"
+    @pointerdown="onPointerDown"
+    @pointermove="onPointerMove"
+    @pointerup="onPointerUp"
+    @pointercancel="onPointerUp"
+    @wheel.prevent="onWheel"
+  >
+    <TresCanvas clear-color="#000004">
+      <SkyCameraRig :radius="90" />
       <TresAmbientLight :intensity="1" />
       <TresDirectionalLight :position="lightPos" :intensity="1" />
+      <StarfieldScene />
       <MessageSphere :messages="messages" />
     </TresCanvas>
   </div>

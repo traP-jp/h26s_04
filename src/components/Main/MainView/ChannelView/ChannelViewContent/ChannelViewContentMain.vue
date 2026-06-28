@@ -1,8 +1,8 @@
 <template>
   <div :class="$style.container">
     <div ref="canvasContainerRef" :class="$style.canvasContainer">
-      <TresCanvas>
-        <TresPerspectiveCamera :position="cameraPos" :look-at="[0, 0, 0]" />
+      <TresCanvas clear-color="#00000000">
+        <SkyCameraRig :radius="90" />
         <TresAmbientLight :intensity="1" />
         <TresDirectionalLight :position="lightPos" :intensity="1" />
         <MessageSphere :messages="messages" />
@@ -27,6 +27,7 @@ import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
 
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
+import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
 import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import { useMessagesStore } from '/@/store/entities/messages'
@@ -41,7 +42,6 @@ const props = defineProps<{
   typingUsers: UserId[]
 }>()
 
-const cameraPos = new Vector3(0, 0, 90)
 const lightPos = new Vector3(5, 5, 5)
 
 const canvasContainerRef = shallowRef<HTMLDivElement>()
