@@ -36,5 +36,4 @@ defineProps<{
   // 背景を透明にして、後ろの星空（StarfieldScene）が透けて見えるようにする
   background: transparent;
 }
-
 </style>
