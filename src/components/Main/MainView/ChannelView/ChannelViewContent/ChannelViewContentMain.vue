@@ -5,11 +5,15 @@
         <SkyCameraRig :radius="cameraRadius" />
         <TresAmbientLight :intensity="1" />
         <TresDirectionalLight :position="lightPos" :intensity="1" />
-        <TresGroup
-          :position="currentCenter"
-          :scale="[currentScale, currentScale, currentScale]"
-        >
-          <MessageSphere :messages="displayMessages" />
+        <TresGroup :position="currentCenter">
+          <TresGroup :scale="[currentScale, currentScale, currentScale]">
+            <MessageSphere :messages="displayMessages" />
+          </TresGroup>
+          <ChannelSatellites
+            v-if="!isParentTransitioning"
+            :channel-id="channelId"
+            :select-channel="selectChannel"
+          />
         </TresGroup>
         <TresGroup
           v-if="parentCenter"
@@ -24,12 +28,6 @@
         </TresGroup>
       </TresCanvas>
     </div>
-    <MessageInput
-      :class="$style.input"
-      :channel-id="channelId"
-      :typing-users="typingUsers"
-      :show-to-new-message-button="false"
-    />
   </div>
 </template>
 
@@ -43,24 +41,25 @@ import { useRouter } from 'vue-router'
 import { TresCanvas } from '@tresjs/core'
 import { Vector3 } from 'three'
 
+import ChannelSatellites from '/@/components/3d/ChannelSatellites.vue'
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
 import SkyCameraRig from '/@/components/3d/SkyCameraRig.vue'
-import MessageInput from '/@/components/Main/MainView/MessageInput/MessageInput.vue'
 import type { MessageScrollerInstance } from '/@/components/Main/MainView/MessagesScroller/MessagesScroller.vue'
 import useChannelPath from '/@/composables/useChannelPath'
 import { FOV_MAX, useSkyCamera } from '/@/composables/useSkyCamera'
+import { useOpenLink } from '/@/composables/useOpenLink'
+import { useSatelliteTransition } from '/@/composables/useSatelliteTransition'
 import { constructChannelPath } from '/@/router'
 import { useChannelsStore } from '/@/store/entities/channels'
 import { useMessagesStore } from '/@/store/entities/messages'
-import type { ChannelId, UserId } from '/@/types/entity-ids'
+import type { ChannelId, MessageId } from '/@/types/entity-ids'
 
 import useChannelMessageFetcher from './composables/useChannelMessageFetcher'
 
 const props = defineProps<{
   channelId: ChannelId
-  entryMessageId?: string
+  entryMessageId?: MessageId
   pinnedMessages: Pin[]
-  typingUsers: UserId[]
 }>()
 
 const DEFAULT_FOV = 70
@@ -84,7 +83,7 @@ const PARENT_ORBIT_CONTROL_OFFSET = {
 const lightPos = new Vector3(5, 5, 5)
 const router = useRouter()
 const { channelsMap } = useChannelsStore()
-const { channelIdToPathString } = useChannelPath()
+const { channelIdToLink, channelIdToPathString } = useChannelPath()
 const {
   camPositionAt,
   focusTarget,
@@ -215,6 +214,21 @@ watch([messages, messageOverride], ([currentMessages, override]) => {
   currentScale.value = CHANNEL_SCALE
   cameraRadius.value = CAMERA_RADIUS
 })
+
+// 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
+const { openLink } = useOpenLink()
+const { playTransition } = useSatelliteTransition()
+const selectChannel = (
+  channelId: ChannelId,
+  event: PointerEvent,
+  focusAngle: number
+) => {
+  const link = channelIdToLink(channelId)
+  if (!link) return
+  // openLink の第3引数（router.push 直前のフック）で遷移演出を差し込めるようにしておく。
+  // focusAngle はクリックした衛星の向き（カメラを正対させてからズームインする）
+  openLink(event, link, () => playTransition(channelId, focusAngle))
+}
 </script>
 
 <style lang="scss" module>
@@ -231,9 +245,10 @@ watch([messages, messageOverride], ([currentMessages, override]) => {
   flex: 1 1;
   width: 100%;
   overflow: hidden;
-}
-
-.input {
-  flex-shrink: 0;
+  // cientos <Html> のラベルは巨大な z-index（既定 16777271）を持つ。
+  // ここで stacking context を作り、その z-index を canvas 内に閉じ込めて
+  // ヘッダー/入力欄/サイドバー/モーダルより手前に出ないようにする。
+  position: relative;
+  isolation: isolate;
 }
 </style>

@@ -190,7 +190,7 @@ const toggleDanmaku = () => {
 
 <template>
   <div :class="$style.Block">
-    <QallMessageView :channel-id="callingChannel" :typing-users="[]">
+    <QallMessageView :channel-id="callingChannel">
       <DanmakuContainer v-if="showDanmaku" />
       <div :class="$style.iconContainer">
         <IconButton

@@ -47,7 +47,7 @@ const isViewersDetailOpen = ref(false)
 
 <style lang="scss" module>
 .item {
-  margin: 16px 0;
+  margin: 8px 0;
   &:first-child {
     margin-top: 0;
   }

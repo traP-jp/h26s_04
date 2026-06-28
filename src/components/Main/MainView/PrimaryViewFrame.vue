@@ -1,8 +1,5 @@
 <template>
   <div :class="$style.container">
-    <teleport v-if="isReady" to="#header">
-      <slot name="header" />
-    </teleport>
     <div :class="$style.content">
       <slot />
     </div>
@@ -11,12 +8,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-defineProps<{
-  isReady: boolean
-}>()
-</script>
 
 <style lang="scss" module>
 .container {

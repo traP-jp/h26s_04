@@ -1,5 +1,18 @@
 <template>
-  <SidebarContentContainer title="Stamp Statistics" right-align>
+  <SidebarContentContainerFoldable title="Stamp Statistics" right-align>
+    <template #header-control>
+      <span
+        v-if="!isTotalStampCountVisible"
+        :class="$style.headerTotal"
+        :data-is-muted="$boolAttr(stampStats === undefined || isFailed)"
+      >
+        {{ totalStampCountText }}
+      </span>
+      <span v-else :class="$style.headerTotal">
+        Total:
+        <ChannelSidebarAnimatedNumber :value="totalStampCount" />
+      </span>
+    </template>
     <p v-if="isFailed" :class="$style.status">
       Failed to load stamp statistics
     </p>
@@ -12,10 +25,6 @@
     </p>
     <p v-else-if="totalStampCount === 0" :class="$style.status">No stamps</p>
     <div v-else :class="$style.content">
-      <p :class="$style.total">
-        Total:
-        <ChannelSidebarAnimatedNumber :value="totalStampCount" />
-      </p>
       <transition-group
         :class="$style.list"
         name="stamp-rank"
@@ -23,21 +32,21 @@
         aria-label="Most used stamps"
       >
         <li
-          v-for="stamp in topStampViewStates"
+          v-for="stamp in stampViewStates"
           :key="stamp.id"
           :class="$style.item"
-          :aria-label="`${stamp.name} ${stamp.totalText}`"
+          :aria-label="`${stamp.name} ${stamp.countText}`"
         >
           <span :class="$style.name" :title="stamp.displayName">
             {{ stamp.displayName }}
           </span>
           <span :class="$style.count">
-            <ChannelSidebarAnimatedNumber :value="stamp.total" />
+            <ChannelSidebarAnimatedNumber :value="stamp.count" />
           </span>
         </li>
       </transition-group>
     </div>
-  </SidebarContentContainer>
+  </SidebarContentContainerFoldable>
 </template>
 
 <script lang="ts" setup>
@@ -45,7 +54,7 @@ import type { ChannelStatsStamp } from '@traptitech/traq'
 
 import { computed } from 'vue'
 
-import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
+import SidebarContentContainerFoldable from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainerFoldable.vue'
 import { useStampsStore } from '/@/store/entities/stamps'
 
 import ChannelSidebarAnimatedNumber from './ChannelSidebarAnimatedNumber.vue'
@@ -60,31 +69,55 @@ const { stampsMap } = useStampsStore()
 
 const stampViewStates = computed(() =>
   [...(props.stampStats ?? [])]
-    .filter(stamp => stamp.total > 0)
-    .sort((a, b) => b.total - a.total || b.count - a.count)
-    .map(stamp => ({
-      ...stamp,
-      name: stampsMap.value.get(stamp.id)?.name ?? 'unknown stamp',
-      totalText: stamp.total.toLocaleString()
-    }))
+    .filter(stamp => stamp.count > 0)
+    .sort((a, b) => b.count - a.count || b.total - a.total)
+    .map(stamp => {
+      const name = stampsMap.value.get(stamp.id)?.name ?? 'unknown stamp'
+      return {
+        ...stamp,
+        name,
+        displayName: name,
+        countText: stamp.count.toLocaleString()
+      }
+    })
 )
 
 const totalStampCount = computed(() =>
   stampViewStates.value.reduce((sum, stamp) => sum + stamp.total, 0)
 )
-const topStampViewStates = computed(() => {
-  return stampViewStates.value.slice(0, 3).map(stamp => ({
-    ...stamp,
-    displayName: stamp.name
-  }))
+const isTotalStampCountVisible = computed(
+  () => !props.isFailed && props.stampStats !== undefined
+)
+const totalStampCountText = computed(() => {
+  if (props.isFailed) return 'error'
+  if (props.stampStats === undefined) {
+    return props.isLoading ? 'loading' : '-'
+  }
+
+  return `Total: ${totalStampCount.value.toLocaleString()}`
 })
 </script>
 
 <style lang="scss" module>
+.headerTotal {
+  @include color-ui-primary;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &[data-is-muted] {
+    @include color-ui-tertiary;
+    font-weight: 400;
+  }
+}
+
 .content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   text-align: right;
 }
@@ -92,18 +125,11 @@ const topStampViewStates = computed(() => {
 .status {
   @include color-ui-secondary;
   margin: 0;
-  font-weight: bold;
+  font-weight: 400;
   text-align: right;
   word-break: normal;
   overflow-wrap: break-word; // for Safari
   overflow-wrap: anywhere;
-}
-
-.total {
-  @include color-ui-primary;
-  margin: 0;
-  font-weight: bold;
-  font-variant-numeric: tabular-nums;
 }
 
 .list {
@@ -119,7 +145,7 @@ const topStampViewStates = computed(() => {
   align-items: baseline;
   column-gap: 6px;
   min-width: 0;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .name {
