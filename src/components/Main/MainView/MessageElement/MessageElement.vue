@@ -9,6 +9,7 @@
       :data-is-entry="$boolAttr(isEntryMessage)"
       :data-is-editing="$boolAttr(isEditing)"
       :data-is-active="$boolAttr(isActive)"
+      :data-is-modal="$boolAttr(disableFold)"
       :data-can-open-message-modal="$boolAttr(canOpenMessageModal)"
       @pointerenter="onPointerEnter"
       @click="onBodyClick"
@@ -191,8 +192,11 @@ $maskImage: linear-gradient(
   overflow: clip;
   margin: 6px 6px 6px 0;
   //border: 1px dashed rgba(255, 96, 160, 0.72);
-  border-radius: 4px;
+  border-radius: 44px;
   padding: 8px $messagePadding;
+  &[data-is-modal] {
+    border: none;
+  }
   &[data-can-open-message-modal] {
     cursor: zoom-in;
   }

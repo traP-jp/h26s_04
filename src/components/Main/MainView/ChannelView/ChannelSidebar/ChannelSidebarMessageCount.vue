@@ -9,73 +9,36 @@
         {{ messageCountText }}
       </span>
       <span v-else :class="$style.count">
-        <template v-for="(char, index) in messageCountChars" :key="index">
-          <span v-if="char === ','" :class="$style.separator">
-            {{ char }}
-          </span>
-          <span v-else :class="$style.digitSlot">
-            <transition :name="countTransitionName">
-              <span :key="`${index}-${char}`" :class="$style.digit">
-                {{ char }}
-              </span>
-            </transition>
-          </span>
-        </template>
+        <ChannelSidebarAnimatedNumber :value="totalMessageCount ?? 0" />
       </span>
     </div>
   </SidebarContentContainer>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 
 import SidebarContentContainer from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarContentContainer.vue'
-import type { ChannelId } from '/@/types/entity-ids'
 
-import useChannelMessageCount from './composables/useChannelMessageCount'
+import ChannelSidebarAnimatedNumber from './ChannelSidebarAnimatedNumber.vue'
 
 const props = defineProps<{
-  channelId: ChannelId
+  totalMessageCount?: number
+  isLoading: boolean
+  isFailed: boolean
 }>()
 
-const { totalMessageCount, isLoading, isFailed } = useChannelMessageCount(props)
-const countDirection = ref<'up' | 'down'>('up')
-const isDigitTransitionEnabled = ref(false)
-
 const isMessageCountVisible = computed(
-  () => !isFailed.value && totalMessageCount.value !== undefined
-)
-
-const countTransitionName = computed(() =>
-  isDigitTransitionEnabled.value
-    ? `count-digit-${countDirection.value}`
-    : undefined
+  () => !props.isFailed && props.totalMessageCount !== undefined
 )
 
 const messageCountText = computed(() => {
-  if (isFailed.value) return 'error'
-  if (totalMessageCount.value === undefined) {
-    return isLoading.value ? 'loading' : '-'
+  if (props.isFailed) return 'error'
+  if (props.totalMessageCount === undefined) {
+    return props.isLoading ? 'loading' : '-'
   }
 
-  return totalMessageCount.value.toLocaleString()
-})
-
-const messageCountChars = computed(() =>
-  isMessageCountVisible.value && totalMessageCount.value !== undefined
-    ? totalMessageCount.value.toLocaleString().split('')
-    : []
-)
-
-watch(totalMessageCount, (newValue, oldValue) => {
-  isDigitTransitionEnabled.value = false
-
-  if (oldValue === undefined) return
-  if (newValue === undefined) return
-  if (newValue === oldValue) return
-
-  countDirection.value = newValue > oldValue ? 'up' : 'down'
-  isDigitTransitionEnabled.value = true
+  return props.totalMessageCount.toLocaleString()
 })
 </script>
 
@@ -96,53 +59,6 @@ watch(totalMessageCount, (newValue, oldValue) => {
   &[data-is-muted] {
     @include color-ui-tertiary;
     font-weight: normal;
-  }
-}
-
-.digitSlot {
-  display: inline-grid;
-  grid-template: 'digit' 1.2em / 0.6em;
-  place-items: center;
-  height: 1.2em;
-  overflow: hidden;
-}
-
-.digit,
-.separator {
-  display: inline-block;
-}
-
-.digit {
-  grid-area: digit;
-}
-
-.separator {
-  min-width: 0.3em;
-}
-
-:global(.count-digit-up-enter-active),
-:global(.count-digit-up-leave-active),
-:global(.count-digit-down-enter-active),
-:global(.count-digit-down-leave-active) {
-  transition: transform 90ms ease-out;
-}
-
-:global(.count-digit-up-enter-from),
-:global(.count-digit-down-leave-to) {
-  transform: translateY(85%);
-}
-
-:global(.count-digit-up-leave-to),
-:global(.count-digit-down-enter-from) {
-  transform: translateY(-85%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :global(.count-digit-up-enter-active),
-  :global(.count-digit-up-leave-active),
-  :global(.count-digit-down-enter-active),
-  :global(.count-digit-down-leave-active) {
-    transition: none;
   }
 }
 </style>

@@ -19,11 +19,18 @@ import type {
   StampId
 } from '/@/types/entity-ids'
 
+export type StampStatsDiff = {
+  stampId: StampId
+  countDelta: number
+  totalDelta: number
+}
+
 type MessageEventMap = {
   reconnect: void
   addMessage: { message: Message; isCiting: boolean }
   updateMessage: Message
   deleteMessage: { messageId: MessageId; channelId?: ChannelId }
+  updateMessageStampStats: { channelId: ChannelId; diffs: StampStatsDiff[] }
   pinMessage: Message
   unpinMessage: MessageId
 }
@@ -39,6 +46,40 @@ export const messageMitt = mitt<MessageEventMap>()
 const getMessage = createSingleflight(apis.getMessage.bind(apis))
 const getFileMeta = createSingleflight(apis.getFileMeta.bind(apis))
 const getOgp = createSingleflight(apis.getOgp.bind(apis))
+
+const getStampTotalsByStampId = (stamps: readonly MessageStamp[]) => {
+  const map = new Map<StampId, number>()
+
+  for (const stamp of stamps) {
+    map.set(stamp.stampId, (map.get(stamp.stampId) ?? 0) + stamp.count)
+  }
+
+  return map
+}
+
+const getMessageStampStatsDiffs = (
+  before: readonly MessageStamp[],
+  after: readonly MessageStamp[]
+): StampStatsDiff[] => {
+  const beforeMap = getStampTotalsByStampId(before)
+  const afterMap = getStampTotalsByStampId(after)
+  const stampIds = new Set([...beforeMap.keys(), ...afterMap.keys()])
+
+  return [...stampIds]
+    .map(stampId => {
+      const beforeTotal = beforeMap.get(stampId) ?? 0
+      const afterTotal = afterMap.get(stampId) ?? 0
+
+      return {
+        stampId,
+        countDelta: Number(afterTotal > 0) - Number(beforeTotal > 0),
+        totalDelta: afterTotal - beforeTotal
+      }
+    })
+    .filter(
+      ({ countDelta, totalDelta }) => countDelta !== 0 || totalDelta !== 0
+    )
+}
 
 const useMessagesStorePinia = defineStore('entities/messages', () => {
   const { myId } = useMeStore()
@@ -70,7 +111,17 @@ const useMessagesStorePinia = defineStore('entities/messages', () => {
   }
   const deleteMessage = (messageId: MessageId) => {
     const messageRef = messagesMap.get(messageId)
-    const channelId = messageRef?.value?.channelId
+    const message = messageRef?.value
+    const channelId = message?.channelId
+    if (message) {
+      const diffs = getMessageStampStatsDiffs(message.stamps, [])
+      if (diffs.length > 0) {
+        messageMitt.emit('updateMessageStampStats', {
+          channelId: message.channelId,
+          diffs
+        })
+      }
+    }
     if (messageRef) {
       messageRef.value = undefined
     }
@@ -101,7 +152,16 @@ const useMessagesStorePinia = defineStore('entities/messages', () => {
   ) => {
     const message = getMessageFromMap(messageId)
     if (!message) return
+    const diffs = getMessageStampStatsDiffs(message.stamps, stamps)
+
     message.stamps = stamps
+
+    if (diffs.length > 0) {
+      messageMitt.emit('updateMessageStampStats', {
+        channelId: message.channelId,
+        diffs
+      })
+    }
   }
   const pinMessage = (messageId: MessageId) => {
     const message = getMessageFromMap(messageId)
