@@ -64,6 +64,7 @@ import ClickOutside from '/@/components/UI/ClickOutside'
 import useBoxSize from '/@/composables/dom/useBoxSize'
 import useEmbeddings from '/@/composables/message/useEmbeddings'
 import useResponsive from '/@/composables/useResponsive'
+import { toggleSpoiler } from '/@/lib/markdown/spoiler'
 import { useMessagesStore } from '/@/store/entities/messages'
 import { useMessageEditingStateStore } from '/@/store/ui/messageEditingStateStore'
 import { useModalStore } from '/@/store/ui/modal'
@@ -137,6 +138,14 @@ const isInteractiveTarget = (target: EventTarget | null) =>
 
 const { pushModal } = useModalStore()
 const openMessageModal = (e: MouseEvent) => {
+  // スポイラーのクリックはトグルのみ行い、モーダルは開かない。
+  // モーダル内（disable-fold で canOpenMessageModal=false）でも MessagesScroller の
+  // デリゲートに依存せずトグルできるよう、判定より前にここで処理する。
+  if (e.target instanceof HTMLElement && toggleSpoiler(e.target)) {
+    e.stopPropagation()
+    return
+  }
+
   if (!canOpenMessageModal.value || isInteractiveTarget(e.target)) return
 
   e.stopPropagation()

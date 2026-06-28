@@ -56,19 +56,69 @@ const _useSkyCamera = () => {
   let lastX = 0
   let lastY = 0
 
+  // カメラドラッグを開始してはいけない要素。pointerdown のハンドラは天球全体を覆う
+  // コンテナに張られているため、ここで入力欄・ボタン・リンクなどの操作可能要素を除外しないと
+  // テキスト選択やクリック、ドラッグ操作を setPointerCapture が奪ってしまう。
+  // カメラ操作を明示的に無効化したい領域には data-sky-camera-ignore を付ける。
+  const INTERACTIVE_SELECTOR = [
+    'a[href]',
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'label',
+    'summary',
+    '[contenteditable]:not([contenteditable="false"])',
+    '[role="button"]',
+    '[role="link"]',
+    '[role="textbox"]',
+    '[role="menuitem"]',
+    '[role="tab"]',
+    '[role="checkbox"]',
+    '[role="radio"]',
+    '[role="switch"]',
+    '[role="slider"]',
+    '[data-sky-camera-ignore]'
+  ].join(',')
+
+  const isInteractiveTarget = (target: EventTarget | null) =>
+    target instanceof Element && target.closest(INTERACTIVE_SELECTOR) !== null
+
+  // この距離（px）を超えて動いて初めてカメラドラッグを開始する。
+  // pointerdown で即座に setPointerCapture すると、カード等の純粋なクリックまで奪って
+  // しまい click/モーダルが発火しなくなるため、「移動したらドラッグ」に倒す。
+  const DRAG_THRESHOLD = 4
+  // pointerdown ～ ドラッグ開始判定までの保留状態。閾値を超えたら dragging へ昇格する。
+  let pending = false
+  let pendingPointerId = -1
+  let downX = 0
+  let downY = 0
+  let captureEl: Element | null = null
+
   const onPointerDown = (e: PointerEvent) => {
-    // setPointerCapture によりポインターが要素外に出ても pointermove/pointerup を受け取り続ける
-    // window へのリスナー登録が不要になる
-    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
-    dragging.value = true
-    lastX = e.clientX
-    lastY = e.clientY
+    // 入力欄・ボタン・メッセージ操作などの上では何もしない（背景/3D 領域のドラッグだけを拾う）
+    if (isInteractiveTarget(e.target)) return
+    // ここではまだ capture しない。閾値を超えて初めてドラッグ扱いにし、
+    // 純粋なクリック（カードのモーダル等）は下の要素へそのまま通す。
+    pending = true
+    pendingPointerId = e.pointerId
+    captureEl = e.currentTarget as Element
+    downX = lastX = e.clientX
+    downY = lastY = e.clientY
     velTheta.value = 0
     velPhi.value = 0
   }
 
   const onPointerMove = (e: PointerEvent) => {
-    if (!dragging.value) return
+    if (!dragging.value) {
+      if (!pending || e.pointerId !== pendingPointerId) return
+      // 閾値を超えるまではドラッグを開始しない（クリック判定を壊さない）
+      if (Math.hypot(e.clientX - downX, e.clientY - downY) < DRAG_THRESHOLD)
+        return
+      // ここで初めて capture。以降ポインターが要素外へ出ても move/up を受け取り続ける
+      captureEl?.setPointerCapture(e.pointerId)
+      dragging.value = true
+    }
     const dx = e.clientX - lastX
     const dy = e.clientY - lastY
     lastX = e.clientX
@@ -82,6 +132,9 @@ const _useSkyCamera = () => {
   }
 
   const onPointerUp = () => {
+    pending = false
+    pendingPointerId = -1
+    captureEl = null
     dragging.value = false
   }
 
