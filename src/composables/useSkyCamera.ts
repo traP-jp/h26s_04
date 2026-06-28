@@ -36,6 +36,10 @@ const _useSkyCamera = () => {
   const velTheta = ref(0)
   const velPhi = ref(0)
   const dragging = ref(false)
+  // 外部（フォーカス再生など）がカメラを直接駆動する間、自動回転・慣性 tick を止めるための旗。
+  // dragging と分けているのは、dragging=true だと onPointerMove が「ドラッグ中」と誤認して
+  // クリックなしのマウス移動でもカメラを回してしまうため。
+  const suspended = ref(false)
   // ズームの目標 FOV。アニメーションループ内で実際の camera.fov へ滑らかに補間される
   const targetFov = ref(70)
   // カメラが見るワールド座標。3Dページではチャンネル間遷移のため原点以外へ動かす。
@@ -257,7 +261,7 @@ const _useSkyCamera = () => {
   // 慣性と自動回転を 1 フレーム分進める
   const tick = () => {
     tickFocusAnimation()
-    if (dragging.value) return
+    if (dragging.value || suspended.value) return
     camTheta.value += velTheta.value + AUTO
     camPhi.value = clampPhi(camPhi.value + velPhi.value)
     velTheta.value *= DAMP
@@ -286,6 +290,7 @@ const _useSkyCamera = () => {
     moveFocusTo,
     targetFov,
     dragging,
+    suspended,
     onPointerDown,
     onPointerMove,
     onPointerUp,

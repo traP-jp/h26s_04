@@ -3,7 +3,7 @@
     <template #page>
       <PrimaryViewSidebarPage v-if="page === 'default'">
         <template #header>
-          <SidebarHeader icon-string="#" :text="channelName" />
+          <SidebarHeader icon-string="#" :channel-id="channelId" />
         </template>
         <template #content>
           <ChannelSidebarContent
@@ -17,6 +17,7 @@
       </PrimaryViewSidebarPage>
       <SidebarPinnedPage
         v-else-if="page === 'pinned'"
+        :channel-id="channelId"
         :pinned-messages="pinnedMessages"
         @move-back="moveToDefaultPage"
       />
@@ -32,8 +33,6 @@
 <script lang="ts" setup>
 import type { Pin } from '@traptitech/traq'
 
-import { computed } from 'vue'
-
 import PrimaryViewSidebar from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebar.vue'
 import PrimaryViewSidebarPage from '/@/components/Main/MainView/PrimaryViewSidebar/PrimaryViewSidebarPage.vue'
 import SidebarEventsPage from '/@/components/Main/MainView/PrimaryViewSidebar/SidebarEventsPage.vue'
@@ -46,7 +45,7 @@ import type { ChannelId, UserId } from '/@/types/entity-ids'
 
 import ChannelSidebarContent from './ChannelSidebarContent.vue'
 
-const props = defineProps<{
+defineProps<{
   channelId: ChannelId
   isSidebarOpenerReady: boolean
   pinnedMessages: Pin[]
@@ -54,12 +53,8 @@ const props = defineProps<{
   inactiveViewingUsers: UserId[]
 }>()
 
-const { channelsMap } = useChannelsStore()
+useChannelsStore()
 const { page, moveToDefaultPage } = useChannelSidebarCommon()
-
-const channelName = computed(
-  () => channelsMap.value.get(props.channelId)?.name ?? ''
-)
 
 const { value: isViewersDetailOpen } = useToggle(false)
 </script>

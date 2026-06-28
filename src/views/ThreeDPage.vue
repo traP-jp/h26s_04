@@ -14,6 +14,7 @@ import StarfieldScene from '/@/components/3d/StarfieldScene.vue'
 import ViewerSphere from '/@/components/3d/ViewerSphere.vue'
 import useChannelPath from '/@/composables/useChannelPath'
 import useCurrentViewers from '/@/composables/useCurrentViewers'
+import { useLatestFocusTour } from '/@/composables/useLatestFocusTour'
 import { FOV_MAX, useSkyCamera } from '/@/composables/useSkyCamera'
 import apis from '/@/lib/apis'
 import { useChannelTree } from '/@/store/domain/channelTree'
@@ -43,9 +44,20 @@ const {
   setFocusTarget,
   targetFov
 } = useSkyCamera()
+const { isPlaying, canPlay, setMessages, toggle, stop } = useLatestFocusTour()
 
 const setFovBelowParentTrigger = () => {
   targetFov.value = FOV_MAX - FOV_MAX_RESTORE_MARGIN
+}
+
+// 再生中にユーザー操作（ドラッグ／ホイール／カードクリック等）があったらモードを解除する。
+// トグルボタン自身の操作（data-tour-toggle）は除外する。
+const maybeStopTour = (e: Event) => {
+  if (!isPlaying.value) return
+  if (e.target instanceof Element && e.target.closest('[data-tour-toggle]')) {
+    return
+  }
+  stop()
 }
 
 const route = useRoute()
@@ -106,6 +118,11 @@ const fetchMessagesByChannelPath = async (channelPath: string) => {
   return fetched
 }
 
+const applyMessages = (nextMessages: Message[]) => {
+  messages.value = nextMessages
+  setMessages(nextMessages)
+}
+
 let routeFetchId = 0
 watch(
   () => route.params['channel'],
@@ -129,13 +146,13 @@ watch(
     targetFov.value = DEFAULT_FOV
 
     if (!channelPath) {
-      messages.value = []
+      applyMessages([])
       return
     }
 
     const fetched = await fetchMessagesByChannelPath(channelPath)
     if (fetchId !== routeFetchId || isParentTransitioning.value) return
-    messages.value = fetched
+    applyMessages(fetched)
   },
   { immediate: true }
 )
@@ -156,6 +173,7 @@ const startParentTransition = async () => {
     return
   }
 
+  stop()
   const transitionToken = ++parentTransitionToken
   const isCurrentTransition = () =>
     !isUnmounted &&
@@ -177,7 +195,7 @@ const startParentTransition = async () => {
     await moveFocusTo(nextCenter, PARENT_TRANSITION_MS)
     if (!isCurrentTransition()) return
 
-    messages.value = fetchedParentMessages
+    applyMessages(fetchedParentMessages)
     currentCenter.value = nextCenter.clone()
     parentCenter.value = null
     parentMessages.value = []
@@ -200,6 +218,7 @@ const startParentTransition = async () => {
 }
 
 const onThreeDPointerDown = (e: PointerEvent) => {
+  maybeStopTour(e)
   if (isParentTransitioning.value) return
   onPointerDown(e)
 }
@@ -214,6 +233,7 @@ const onThreeDPointerUp = () => {
 }
 
 const onThreeDWheel = (e: WheelEvent) => {
+  maybeStopTour(e)
   if (isParentTransitioning.value) return
 
   e.preventDefault()
@@ -231,6 +251,8 @@ useEventListener(window, 'wheel', onThreeDWheel, {
 })
 
 onBeforeUnmount(() => {
+  stop()
+  setMessages([])
   isUnmounted = true
   parentTransitionToken++
   pendingParentRoutePath = null
@@ -240,12 +262,23 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    style="width: 100vw; height: 100vh"
+    style="position: relative; width: 100vw; height: 100vh"
     @pointerdown="onThreeDPointerDown"
     @pointermove="onThreeDPointerMove"
     @pointerup="onThreeDPointerUp"
     @pointercancel="onThreeDPointerUp"
+    @click="maybeStopTour"
   >
+    <button
+      type="button"
+      data-tour-toggle
+      data-sky-camera-ignore
+      :disabled="!canPlay"
+      :class="$style.tourToggle"
+      @click="toggle()"
+    >
+      {{ isPlaying ? '停止' : '最新から順に見る' }}
+    </button>
     <TresCanvas clear-color="#000004">
       <SkyCameraRig :radius="90" />
       <TresAmbientLight :intensity="1" />
@@ -264,3 +297,29 @@ onBeforeUnmount(() => {
     </TresCanvas>
   </div>
 </template>
+
+<style lang="scss" module>
+.tourToggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+</style>
