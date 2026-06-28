@@ -1,5 +1,5 @@
 <template>
-  <PrimaryViewFrame :is-ready="isReady">
+  <PrimaryViewFrame>
     <template #default>
       <ChannelViewContent
         :channel-id="channelId"

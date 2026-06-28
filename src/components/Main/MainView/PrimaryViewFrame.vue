@@ -9,12 +9,6 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-defineProps<{
-  isReady: boolean
-}>()
-</script>
-
 <style lang="scss" module>
 .container {
   display: flex;

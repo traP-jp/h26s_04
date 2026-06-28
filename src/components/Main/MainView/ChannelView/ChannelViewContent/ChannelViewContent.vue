@@ -1,14 +1,5 @@
 <template>
-  <div
-    :class="$style.container"
-    @dragstart.stop="onDragStart"
-    @dragover.prevent.stop="onDragOver"
-    @drop.prevent.stop="onDrop"
-  >
-    <ChannelViewContentFileUploadOverlay
-      v-if="canDrop"
-      :class="$style.fileUploadOverlay"
-    />
+  <div :class="$style.container">
     <ChannelViewContentMain
       :key="renderKey"
       :channel-id="channelId"
@@ -18,95 +9,21 @@
   </div>
 </template>
 
-<script lang="ts">
-import type { Ref } from 'vue'
-import { computed, ref, toRef } from 'vue'
-
-import { debounce, throttle } from 'throttle-debounce'
-
-import { useRenderKey } from '/@/composables/dom/useRenderKey'
-import useMessageInputStateAttachment from '/@/composables/messageInputState/useMessageInputStateAttachment'
-import { useToastStore } from '/@/store/ui/toast'
-import type { ChannelId } from '/@/types/entity-ids'
-
-const { key: renderKey } = useRenderKey('messages')
-
-const useDragDrop = (channelId: Ref<ChannelId>) => {
-  const { addErrorToast } = useToastStore()
-  const { addTextToLast, addAttachment } = useMessageInputStateAttachment(
-    channelId,
-    addErrorToast
-  )
-
-  // itemsはsafariには存在しない
-  const hasFilesOrItems = (dt: DataTransfer) =>
-    dt.files.length > 0 || dt.items?.length > 0
-
-  const isDragging = ref(false)
-  /** ドラッグがtraQの画面からスタートしたかどうか */
-  const isDragStartInside = ref(false)
-  const canDrop = computed(() => isDragging.value && !isDragStartInside.value)
-
-  const onDrop = async (event: DragEvent) => {
-    const droppable = canDrop.value // isDraggingなどに依存しているので退避しておく
-    isDragging.value = false
-    isDragStartInside.value = false
-
-    if (droppable && event.dataTransfer) {
-      const result = await getTextOrFile(event.dataTransfer)
-      if (result) {
-        if (typeof result === 'string') {
-          addTextToLast(result)
-        } else {
-          for (const file of result) {
-            await addAttachment(file)
-          }
-        }
-      }
-    }
-  }
-  const onDragStart = (_event: DragEvent) => {
-    isDragStartInside.value = true
-  }
-
-  /** ドラッグ終了判定するまでにdragoverが何ms開けばいいか */
-  const dragoverResetDurationMs = 150
-  const resetDraggingState = debounce(dragoverResetDurationMs, () => {
-    isDragging.value = false
-    isDragStartInside.value = false
-  })
-  const onDragOver = throttle(50, (event: DragEvent) => {
-    if (event.dataTransfer && hasFilesOrItems(event.dataTransfer)) {
-      isDragging.value = true
-    }
-    resetDraggingState()
-  })
-  return {
-    canDrop,
-    onDrop,
-    onDragStart,
-    onDragOver
-  }
-}
-</script>
-
 <script lang="ts" setup>
 import type { Pin } from '@traptitech/traq'
 
-import { getTextOrFile } from '/@/lib/dom/dataTransfer'
+import { useRenderKey } from '/@/composables/dom/useRenderKey'
+import type { ChannelId } from '/@/types/entity-ids'
 
-import ChannelViewContentFileUploadOverlay from './ChannelViewContentFileUploadOverlay.vue'
 import ChannelViewContentMain from './ChannelViewContentMain.vue'
 
-const props = defineProps<{
+const { key: renderKey } = useRenderKey('messages')
+
+defineProps<{
   channelId: ChannelId
   entryMessageId?: ChannelId
   pinnedMessages: Pin[]
 }>()
-
-const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(
-  toRef(props, 'channelId')
-)
 </script>
 
 <style lang="scss" module>
@@ -118,15 +35,6 @@ const { canDrop, onDrop, onDragStart, onDragOver } = useDragDrop(
   height: 100%;
   // 背景を透明にして、後ろの星空（StarfieldScene）が透けて見えるようにする
   background: transparent;
-}
-
-.fileUploadOverlay {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  z-index: $z-index-file-upload-overlay;
 }
 
 .header {

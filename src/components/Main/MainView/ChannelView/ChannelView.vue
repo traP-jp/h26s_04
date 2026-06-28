@@ -1,5 +1,5 @@
 <template>
-  <PrimaryViewFrame :is-ready="isReady">
+  <PrimaryViewFrame>
     <template #default>
       <QallView v-if="getQallingState(channelId) === 'mainView'" />
       <ChannelViewContent
