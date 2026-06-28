@@ -51,6 +51,7 @@
         :message-id="messageId"
         :stamps="message.stamps"
         :is-archived="isArchived"
+        :disable-fold="disableFold"
       />
     </div>
   </ClickOutside>
@@ -193,7 +194,7 @@ $maskImage: linear-gradient(
   margin: 6px auto;
   //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 44px;
-  padding: 8px $messagePadding;
+  padding: 8px 16px;
   &[data-is-modal] {
     border: none;
     border-radius: 0;
