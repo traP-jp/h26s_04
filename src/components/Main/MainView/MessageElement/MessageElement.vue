@@ -10,8 +10,11 @@
       :data-is-editing="$boolAttr(isEditing)"
       :data-is-active="$boolAttr(isActive)"
       :data-is-modal="$boolAttr(disableFold)"
+      :data-can-open-message-modal-on-body="
+        $boolAttr(canOpenMessageModalOnBody)
+      "
       @pointerenter="onPointerEnter"
-      @click="onClick"
+      @click="onBodyClick"
       @mouseleave="onMouseLeave"
     >
       <MessageTools
@@ -84,11 +87,13 @@ const props = withDefaults(
     isEntryMessage?: boolean
     isArchived?: boolean
     disableFold?: boolean
+    openModalOnBodyClick?: boolean
   }>(),
   {
     isEntryMessage: false,
     isArchived: false,
-    disableFold: false
+    disableFold: false,
+    openModalOnBodyClick: false
   }
 )
 
@@ -123,6 +128,9 @@ const isMessageActuallyFolded = computed(() => isMessageOversized.value)
 const canOpenMessageModal = computed(
   () => !props.disableFold && !isEditing.value
 )
+const canOpenMessageModalOnBody = computed(
+  () => props.openModalOnBodyClick && canOpenMessageModal.value
+)
 
 const interactiveSelector = [
   'a',
@@ -131,6 +139,8 @@ const interactiveSelector = [
   'textarea',
   'select',
   '[contenteditable="true"]',
+  '[role="button"]',
+  '[data-message-interactive]',
   'audio',
   'video'
 ].join(',')
@@ -167,6 +177,12 @@ useElementRenderObserver(
 
 const { isHovered, onPointerEnter, onClick, onMouseLeave, onClickOutside } =
   useMessageToolsHover()
+const onBodyClick = (e: MouseEvent) => {
+  onClick()
+  if (props.openModalOnBodyClick) {
+    openMessageModal(e)
+  }
+}
 const showMessageTools = computed(
   () => (isHovered.value && !isEditing.value) || isActive.value
 )
@@ -197,6 +213,9 @@ $maskImage: linear-gradient(
   border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 44px;
   padding: 8px $messagePadding;
+  &[data-can-open-message-modal-on-body] {
+    cursor: zoom-in;
+  }
   &[data-is-modal] {
     border: none;
   }

@@ -58,7 +58,7 @@ const quaternions = computed(() => {
   >
     <Html transform occlude :distance-factor="15">
       <div :class="$style.card">
-        <MessageElement :message-id="msg.id" />
+        <MessageElement :message-id="msg.id" open-modal-on-body-click />
       </div>
     </Html>
   </TresGroup>

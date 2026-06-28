@@ -1,5 +1,9 @@
 <template>
-  <div v-if="stamps.length > 0" :class="$style.stampWrapper">
+  <div
+    v-if="stamps.length > 0"
+    :class="$style.stampWrapper"
+    data-message-interactive
+  >
     <AIcon
       v-if="showDetailButton"
       name="rounded-triangle"
