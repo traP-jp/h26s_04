@@ -1,22 +1,58 @@
 <template>
-  <div :class="$style.container">
+  <!-- Modal layout -->
+  <div v-if="disableFold" :class="$style.containerModal">
     <span
       :class="$style.date"
       :title="message.createdAt !== message.updatedAt ? createdDate : undefined"
-      :data-is-modal="$boolAttr(disableFold)"
       >{{ date }}</span
     >
     <div :class="$style.header">
       <UserIcon :class="$style.userIcon" :user-id="message.userId" :size="40" />
       <MessageHeader :class="$style.messageHeader" :user-id="message.userId" />
     </div>
-    <div :class="$style.messageContents">
+    <div :class="$style.messageContentsModal">
       <MarkdownContent
         v-show="!isEditing"
         :content="renderedContent"
         :class="$style.markdownContent"
-        :data-is-modal="$boolAttr(disableFold)"
       />
+      <MessageEditor
+        v-if="isEditing"
+        :raw-content="message.content"
+        :message-id="messageId"
+        :channel-id="message.channelId"
+        @finish-editing="finishEditing"
+      />
+      <MessageQuoteList
+        v-if="embeddingsState.quoteMessageIds.length > 0"
+        :class="$style.messageEmbeddingsList"
+        :parent-message-channel-id="message.channelId"
+        :message-ids="embeddingsState.quoteMessageIds"
+      />
+      <MessageFileList
+        v-if="embeddingsState.fileIds.length > 0"
+        :class="$style.messageEmbeddingsList"
+        :channel-id="message.channelId"
+        :file-ids="embeddingsState.fileIds"
+      />
+      <MessageOgpList
+        v-if="embeddingsState.externalUrls.length > 0"
+        :external-urls="embeddingsState.externalUrls"
+      />
+    </div>
+  </div>
+
+  <!-- Non-modal layout (original grid) -->
+  <div v-else :class="$style.container">
+    <UserIcon :class="$style.userIconGrid" :user-id="message.userId" :size="40" />
+    <MessageHeader
+      :class="$style.messageHeaderGrid"
+      :user-id="message.userId"
+      :created-at="message.createdAt"
+      :updated-at="message.updatedAt"
+    />
+    <div :class="$style.messageContents">
+      <MarkdownContent v-show="!isEditing" :content="renderedContent" />
       <MessageEditor
         v-if="isEditing"
         :raw-content="message.content"
@@ -94,7 +130,38 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
 </script>
 
 <style lang="scss" module>
+/* Non-modal: original grid layout */
 .container {
+  display: grid;
+  grid-template:
+    'user-icon message-header'
+    'user-icon message-contents'
+    '......... message-contents';
+  grid-template-rows: 20px auto 1fr;
+  grid-template-columns: 42px 1fr;
+  width: 100%;
+  min-width: 0;
+}
+
+.userIconGrid {
+  grid-area: user-icon;
+  margin-top: 2px;
+}
+
+.messageHeaderGrid {
+  grid-area: message-header;
+  padding-left: 8px;
+}
+
+.messageContents {
+  grid-area: message-contents;
+  padding-top: 4px;
+  padding-left: 8px;
+  min-width: 0;
+}
+
+/* Modal: flex column layout */
+.containerModal {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -104,10 +171,7 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
 .date {
   @include color-ui-secondary;
   @include size-caption;
-  margin: 0 0 4px 0;
-  &[data-is-modal] {
-    margin: 0 0 24px 0;
-  }
+  margin: 0 0 24px 0;
 }
 
 .header {
@@ -124,18 +188,16 @@ const date = computed(() => getDateRepresentation(message.value.updatedAt))
   min-width: 0;
 }
 
-.messageContents {
+.messageContentsModal {
   padding-top: 4px;
   min-width: 0;
 }
 
+.markdownContent {
+  margin: 32px 0;
+}
+
 .messageEmbeddingsList {
   margin-top: 16px;
-}
-.markdownContent {
-  &[data-is-modal] {
-    margin: 32px 0 32px 0;
-  }
-  margin: 16px 0 16px 0;
 }
 </style>

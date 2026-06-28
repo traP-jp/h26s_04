@@ -47,7 +47,6 @@
         </div>
       </div>
       <MessageStampList
-        data-interactive-area
         :show-detail-button="isHovered || isMobile"
         :message-id="messageId"
         :stamps="message.stamps"
@@ -191,13 +190,15 @@ $maskImage: linear-gradient(
   align-self: center;
   overflow: hidden;
   overflow: clip;
-  margin: 6px 6px 6px 0;
+  margin: 6px auto;
   //border: 1px dashed rgba(255, 96, 160, 0.72);
-  //border-radius: 44px;
-  padding-left: 24px;
+  border-radius: 44px;
+  padding: 8px $messagePadding;
   &[data-is-modal] {
-    padding: 8px $messagePadding;
     border: none;
+    border-radius: 0;
+    margin: 6px 6px 6px 8px;
+    padding: 8px $messagePadding;
   }
   &[data-can-open-message-modal] {
     cursor: zoom-in;

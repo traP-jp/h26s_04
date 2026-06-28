@@ -8,13 +8,32 @@
       :user-id="userId"
       :is-bot="user?.bot ?? false"
     />
-    <div :class="$style.name">@{{ user?.name ?? 'unknown' }}</div>
+    <span :class="$style.name">@{{ user?.name ?? 'unknown' }}</span>
+    <span
+      v-if="createdAt"
+      :class="$style.date"
+      :title="createdAt !== updatedAt ? createdDate : undefined"
+    >
+      {{ date }}
+    </span>
+    <AIcon
+      v-if="createdAt && createdAt !== updatedAt"
+      :class="$style.editIcon"
+      :size="16"
+      name="pencil-outline"
+      mdi
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 
+import AIcon from '/@/components/UI/AIcon.vue'
+import {
+  getDateRepresentation,
+  getFullDayWithTimeString
+} from '/@/lib/basic/date'
 import { useUsersStore } from '/@/store/entities/users'
 import type { UserId } from '/@/types/entity-ids'
 
@@ -22,6 +41,8 @@ import GradeBadge from './GradeBadge.vue'
 
 const props = defineProps<{
   userId: UserId
+  createdAt?: string
+  updatedAt?: string
 }>()
 
 const { usersMap, fetchUser } = useUsersStore()
@@ -30,11 +51,19 @@ const user = computed(() => usersMap.value.get(props.userId))
 if (user.value === undefined) {
   fetchUser({ userId: props.userId })
 }
+
+const createdDate = computed(() =>
+  props.createdAt ? getFullDayWithTimeString(new Date(props.createdAt)) : ''
+)
+const date = computed(() =>
+  props.updatedAt ? getDateRepresentation(props.updatedAt) : ''
+)
 </script>
 
 <style lang="scss" module>
 .header {
-  display: block;
+  display: inline-flex;
+  align-items: baseline;
   min-width: 0;
 }
 
@@ -64,5 +93,17 @@ if (user.value === undefined) {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.date {
+  @include color-ui-secondary;
+  @include size-caption;
+  margin-left: 4px;
+}
+
+.editIcon {
+  @include color-ui-secondary;
+  margin-left: 4px;
+  flex-shrink: 0;
 }
 </style>

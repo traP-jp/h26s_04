@@ -5,12 +5,14 @@
       name="rounded-triangle"
       :size="20"
       :class="$style.toggleButton"
+      data-interactive-area
       :data-is-open="$boolAttr(isDetailShown)"
       @click="toggleDetail"
     />
     <div
       ref="listEle"
       :class="$style.stampList"
+      data-interactive-area
       :data-show-details="$boolAttr(isDetailShown)"
       :data-is-overflowing="$boolAttr(isStampListOverflowing)"
     >
