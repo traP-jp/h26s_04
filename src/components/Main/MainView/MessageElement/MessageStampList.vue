@@ -1,51 +1,60 @@
 <template>
-  <div v-if="stamps.length > 0" :class="$style.stampWrapper">
-    <AIcon
-      v-if="showDetailButton"
-      name="rounded-triangle"
-      :size="20"
-      :class="$style.toggleButton"
-      :data-is-open="$boolAttr(isDetailShown)"
-      @click="toggleDetail"
-    />
-    <div
-      ref="listEle"
-      :class="$style.stampList"
-      :data-show-details="$boolAttr(isDetailShown)"
-      :data-is-overflowing="$boolAttr(isStampListOverflowing)"
-    >
-      <transition-group name="stamp">
-        <div v-for="stamp in stampList" :key="stamp.id" :class="$style.stamp">
-          <StampElement
-            :stamp="stamp"
-            :is-detail-shown="isDetailShown"
-            :is-archived="isArchived"
-            @add-stamp="addStamp"
-            @remove-stamp="removeStamp"
-          />
-          <StampDetailElement
-            v-if="isDetailShown"
-            :class="$style.detail"
-            :stamp="stamp"
-          />
+  <Transition
+    :enter-from-class="$style.collapsed"
+    :enter-active-class="$style.expanding"
+    :leave-to-class="$style.collapsed"
+    :leave-active-class="$style.expanding"
+  >
+    <div v-if="stamps.length > 0" :class="$style.expandWrapper">
+      <div :class="$style.stampWrapper">
+        <AIcon
+          v-if="showDetailButton"
+          name="rounded-triangle"
+          :size="20"
+          :class="$style.toggleButton"
+          :data-is-open="$boolAttr(isDetailShown)"
+          @click="toggleDetail"
+        />
+        <div
+          ref="listEle"
+          :class="$style.stampList"
+          :data-show-details="$boolAttr(isDetailShown)"
+          :data-is-overflowing="$boolAttr(isStampListOverflowing)"
+        >
+          <transition-group name="stamp">
+            <div v-for="stamp in stampList" :key="stamp.id" :class="$style.stamp">
+              <StampElement
+                :stamp="stamp"
+                :is-detail-shown="isDetailShown"
+                :is-archived="isArchived"
+                @add-stamp="addStamp"
+                @remove-stamp="removeStamp"
+              />
+              <StampDetailElement
+                v-if="isDetailShown"
+                :class="$style.detail"
+                :stamp="stamp"
+              />
+            </div>
+          </transition-group>
+          <div
+            v-if="!isDetailShown && !isArchived"
+            :class="$style.stampPickerOpener"
+            @click="toggleStampPicker"
+          >
+            <AIcon mdi name="plus" :size="20" />
+          </div>
         </div>
-      </transition-group>
-      <div
-        v-if="!isDetailShown && !isArchived"
-        :class="$style.stampPickerOpener"
-        @click="toggleStampPicker"
-      >
-        <AIcon mdi name="plus" :size="20" />
+        <span
+          v-if="isStampListOverflowing"
+          :class="$style.ellipsis"
+          aria-hidden="true"
+        >
+          …
+        </span>
       </div>
     </div>
-    <span
-      v-if="isStampListOverflowing"
-      :class="$style.ellipsis"
-      aria-hidden="true"
-    >
-      …
-    </span>
-  </div>
+  </Transition>
 </template>
 
 <script lang="ts" setup>
@@ -106,6 +115,47 @@ watch(
   { immediate: true, flush: 'post' }
 )
 
+watch(isDetailShown, async () => {
+  const el = listEle.value
+  if (!el) return
+
+  // capture start height before DOM update
+  const startHeight = el.getBoundingClientRect().height
+
+  await nextTick()
+
+  // temporarily unlock height/overflow to measure true content height,
+  // bypassing max-height and contain:paint that can skew scrollHeight
+  el.style.maxHeight = 'none'
+  el.style.height = 'auto'
+  el.style.overflow = 'hidden'
+  const endHeight = el.scrollHeight
+
+  if (Math.abs(endHeight - startHeight) < 1) {
+    el.style.maxHeight = ''
+    el.style.height = ''
+    el.style.overflow = ''
+    return
+  }
+
+  // snap to start height (no transition)
+  el.style.height = `${startHeight}px`
+
+  // double rAF: first frame paints startHeight, second frame starts transition
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      el.style.height = `${endHeight}px`
+      setTimeout(() => {
+        el.style.maxHeight = ''
+        el.style.height = ''
+        el.style.overflow = ''
+        el.style.transition = ''
+      }, 320)
+    })
+  })
+})
+
 const { toggleStampPicker } = useStampPickerInvoker(
   async stampData => addStampOptimistically(props.messageId, stampData.id),
   listEle,
@@ -118,10 +168,25 @@ const { toggleStampPicker } = useStampPickerInvoker(
 $stamp-height: 1.5rem;
 $stamp-row-gap: 0.25rem;
 
+.expandWrapper {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+}
+
+.collapsed {
+  grid-template-rows: 0fr;
+}
+
+.expanding {
+  transition: grid-template-rows 1s ease;
+}
+
 .stampWrapper {
   position: relative;
-  margin-top: 8px;
+  padding-top: 8px;
   margin-left: 42px;
+  min-height: 0;
 }
 
 .toggleButton {
