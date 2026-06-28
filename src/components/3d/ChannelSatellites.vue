@@ -33,17 +33,29 @@ type SatellitePointerEvent = {
   stopPropagation: () => void
 }
 
-const props = defineProps<{
-  channelId: ChannelId
-  // <TresCanvas> は別の Vue アプリを生成し vue-router が注入されないため、
-  // 遷移処理は通常コンテキストにある親（ChannelViewContentMain）に委譲する。
-  // focusAngle はクリックした衛星の赤道面上のワールド角（遷移演出のフォーカス用）。
-  selectChannel: (
-    channelId: ChannelId,
-    event: PointerEvent,
-    focusAngle: number
-  ) => void
-}>()
+const props = withDefaults(
+  defineProps<{
+    channelId: ChannelId
+    interactive?: boolean
+    paused?: boolean
+    showLabels?: boolean
+    highlightedChannelId?: ChannelId
+    highlightedAngle?: number
+    // <TresCanvas> は別の Vue アプリを生成し vue-router が注入されないため、
+    // 遷移処理は通常コンテキストにある親（ChannelViewContentMain）に委譲する。
+    // focusAngle はクリックした衛星の赤道面上のワールド角（遷移演出のフォーカス用）。
+    selectChannel: (
+      channelId: ChannelId,
+      event: PointerEvent,
+      focusAngle: number
+    ) => void
+  }>(),
+  {
+    interactive: true,
+    paused: false,
+    showLabels: true
+  }
+)
 
 // ルート要素が <TresGroup> 1個だと vueCompilerOptions.fallthroughAttributes により
 // Volar が props 型を {} に誤推論してしまう。3D シーンノードに属性継承は不要なので無効化する。
@@ -68,10 +80,17 @@ const satellites = computed(() => {
 
   const n = children.length
   return children.map((ch, i) => {
-    const angle = (i / n) * Math.PI * 2
+    const defaultAngle = (i / n) * Math.PI * 2
+    const isHighlighted = ch.id === props.highlightedChannelId
+    const angle =
+      isHighlighted && props.highlightedAngle !== undefined
+        ? props.highlightedAngle
+        : defaultAngle
     return {
       id: ch.id,
       name: ch.name,
+      isHighlighted,
+      radius: isHighlighted ? SATELLITE_RADIUS * 1.35 : SATELLITE_RADIUS,
       angle,
       position: new Vector3(
         Math.cos(angle) * ORBIT_RADIUS,
@@ -91,17 +110,22 @@ const opacities = ref<number[]>([])
 const groupRef = shallowRef<Group>()
 // 最新の公転回転量。クリック時に衛星のワールド角を求めるために保持する
 let latestGroupRot = 0
+const groupWorldPosition = new Vector3()
 
 const { onBeforeRender } = useLoop()
 onBeforeRender(({ elapsed }) => {
   const sats = satellites.value
-  const groupRot = elapsed * orbitSpeed
+  const groupRot = props.paused ? 0 : elapsed * orbitSpeed
   latestGroupRot = groupRot
 
   const group = groupRef.value
   if (group) group.rotation.y = groupRot
 
   const camPos = camPositionAt(CAMERA_RADIUS)
+  if (group) {
+    group.getWorldPosition(groupWorldPosition)
+    camPos.sub(groupWorldPosition)
+  }
   const camLen2 = camPos.lengthSq()
   const camLen = Math.sqrt(camLen2) || 1
   // 視線方向の最大奥行き（最も裏側の衛星）。これで深さを正規化する。
@@ -152,6 +176,7 @@ const onPointerDown = (
   baseAngle: number,
   event: SatellitePointerEvent
 ) => {
+  if (props.interactive === false) return
   const ne = event.nativeEvent
   press = { channelId, baseAngle, x: ne.clientX, y: ne.clientY }
   window.addEventListener('pointerup', onWindowPointerUp, { once: true })
@@ -170,15 +195,21 @@ onBeforeUnmount(() => {
       :position="sat.position"
     >
       <TresMesh @pointerdown="onPointerDown(sat.id, sat.angle, $event)">
-        <TresSphereGeometry :args="[SATELLITE_RADIUS, 16, 16]" />
+        <TresSphereGeometry :args="[sat.radius, 16, 16]" />
         <TresMeshStandardMaterial
           :color="sat.color"
           transparent
           :opacity="opacities[i] ?? 1"
         />
       </TresMesh>
-      <Html center pointer-events="none">
-        <div :class="$style.label" :style="{ opacity: opacities[i] ?? 1 }">
+      <Html v-if="props.showLabels" center pointer-events="none">
+        <div
+          :class="[
+            $style.label,
+            sat.isHighlighted ? $style.highlightedLabel : undefined
+          ]"
+          :style="{ opacity: opacities[i] ?? 1 }"
+        >
           {{ sat.name }}
         </div>
       </Html>
@@ -199,5 +230,10 @@ onBeforeUnmount(() => {
   font-size: 12px;
   font-weight: 600;
   user-select: none;
+}
+
+.highlightedLabel {
+  background: rgba(255, 255, 255, 0.86);
+  color: #111;
 }
 </style>

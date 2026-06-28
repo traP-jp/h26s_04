@@ -16,7 +16,7 @@ const DAMP = 0.94
 const PHI_MIN = 0.18
 const PHI_MAX = Math.PI - 0.18
 const FOV_MIN = 18
-const FOV_MAX = 100
+export const FOV_MAX = 100
 const ZOOM_SPEED = 0.05
 
 const clampPhi = (v: number) => Math.max(PHI_MIN, Math.min(PHI_MAX, v))
@@ -42,16 +42,22 @@ const _useSkyCamera = () => {
   const suspended = ref(false)
   // ズームの目標 FOV。アニメーションループ内で実際の camera.fov へ滑らかに補間される
   const targetFov = ref(70)
+  // カメラが見るワールド座標。3Dページではチャンネル間遷移のため原点以外へ動かす。
+  const focusTarget = ref(new THREE.Vector3())
+
+  const camDirection = () => {
+    const sp = Math.sin(camPhi.value)
+    return new THREE.Vector3(
+      sp * Math.cos(camTheta.value),
+      Math.cos(camPhi.value),
+      sp * Math.sin(camTheta.value)
+    )
+  }
 
   // 球座標 (camTheta, camPhi) から、指定半径での Three.js 空間上のカメラ位置を計算する
   // 角度は共有しつつ半径だけ消費側ごとに変えられるようにする（星空は遠距離・球面ページは球の外側など）
   const camPositionAt = (radius: number) => {
-    const sp = Math.sin(camPhi.value)
-    return new THREE.Vector3(
-      radius * sp * Math.cos(camTheta.value),
-      radius * Math.cos(camPhi.value),
-      radius * sp * Math.sin(camTheta.value)
-    )
+    return focusTarget.value.clone().add(camDirection().multiplyScalar(radius))
   }
 
   // ここで一元管理することで各 3D コンポーネントが同じ位置を参照できる
@@ -145,18 +151,96 @@ const _useSkyCamera = () => {
   // 現在の視線方向に垂直な「画面の縦軸」周りにカメラを angle ぶん回す（トラックボール的な水平回転）。
   // ワールド Y 固定（camTheta 直接操作）と違い、カメラが傾いていても見た目が破綻しない。
   const WORLD_UP = new THREE.Vector3(0, 1, 0)
-  const rotateAroundViewUp = (angle: number) => {
-    const pos = camPositionAt(1) // 単位方向ベクトル（原点→カメラ）
-    const forward = pos.clone().negate() // 視線方向（カメラ→原点）
+  const getViewUp = () => {
+    const pos = camDirection()
+    const forward = pos.clone().negate() // 視線方向（カメラ→注視点）
     const right = new THREE.Vector3().crossVectors(forward, WORLD_UP)
     if (right.lengthSq() < 1e-6) right.set(1, 0, 0) // 極で縮退した場合の保険
     right.normalize()
-    // 視線に垂直な縦軸（画面の上方向）
-    const up = new THREE.Vector3().crossVectors(right, forward).normalize()
-    pos.applyAxisAngle(up, angle)
+    return new THREE.Vector3().crossVectors(right, forward).normalize()
+  }
+
+  const rotateAroundViewUp = (angle: number) => {
+    const pos = camDirection() // 単位方向ベクトル（注視点→カメラ）
+    pos.applyAxisAngle(getViewUp(), angle)
     // 単位ベクトルを球座標へ戻す（y = cos(phi)）
     camTheta.value = Math.atan2(pos.z, pos.x)
     camPhi.value = clampPhi(Math.acos(pos.y))
+  }
+
+  type FocusAnimation = {
+    from: THREE.Vector3
+    to: THREE.Vector3
+    control?: THREE.Vector3
+    startedAt: number
+    duration: number
+    resolve: () => void
+  }
+  let focusAnimation: FocusAnimation | null = null
+
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+  const easeInOutCubic = (t: number) =>
+    t < 0.5 ? 4 * t ** 3 : 1 - Math.pow(-2 * t + 2, 3) / 2
+  const quadraticBezier = (
+    from: THREE.Vector3,
+    control: THREE.Vector3,
+    to: THREE.Vector3,
+    t: number
+  ) => {
+    const invT = 1 - t
+    return from
+      .clone()
+      .multiplyScalar(invT * invT)
+      .add(control.clone().multiplyScalar(2 * invT * t))
+      .add(to.clone().multiplyScalar(t * t))
+  }
+
+  const setFocusTarget = (target: THREE.Vector3) => {
+    focusAnimation?.resolve()
+    focusAnimation = null
+    focusTarget.value = target.clone()
+  }
+
+  const moveFocusTo = (
+    target: THREE.Vector3,
+    duration = 800,
+    control?: THREE.Vector3
+  ) => {
+    focusAnimation?.resolve()
+    return new Promise<void>(resolve => {
+      focusAnimation = {
+        from: focusTarget.value.clone(),
+        to: target.clone(),
+        control: control?.clone(),
+        startedAt: performance.now(),
+        duration,
+        resolve
+      }
+    })
+  }
+
+  const tickFocusAnimation = () => {
+    if (!focusAnimation) return
+
+    const t = Math.min(
+      1,
+      (performance.now() - focusAnimation.startedAt) / focusAnimation.duration
+    )
+    const easedT = focusAnimation.control ? easeInOutCubic(t) : easeOutCubic(t)
+    focusTarget.value = focusAnimation.control
+      ? quadraticBezier(
+          focusAnimation.from,
+          focusAnimation.control,
+          focusAnimation.to,
+          easedT
+        )
+      : focusAnimation.from.clone().lerp(focusAnimation.to, easedT)
+
+    if (t < 1) return
+
+    const { resolve } = focusAnimation
+    focusAnimation = null
+    resolve()
   }
 
   const onWheel = (e: WheelEvent) => {
@@ -176,6 +260,7 @@ const _useSkyCamera = () => {
 
   // 慣性と自動回転を 1 フレーム分進める
   const tick = () => {
+    tickFocusAnimation()
     if (dragging.value || suspended.value) return
     camTheta.value += velTheta.value + AUTO
     camPhi.value = clampPhi(camPhi.value + velPhi.value)
@@ -199,6 +284,10 @@ const _useSkyCamera = () => {
     camPhi,
     camPosition,
     camPositionAt,
+    focusTarget,
+    getViewUp,
+    setFocusTarget,
+    moveFocusTo,
     targetFov,
     dragging,
     suspended,

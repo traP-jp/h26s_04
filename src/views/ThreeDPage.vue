@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { Message } from '@traptitech/traq'
 
-import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { TresCanvas } from '@tresjs/core'
+import { useEventListener } from '@vueuse/core'
 import { Vector3 } from 'three'
 
 import MessageSphere from '/@/components/3d/MessageSphere.vue'
@@ -14,7 +15,7 @@ import ViewerSphere from '/@/components/3d/ViewerSphere.vue'
 import useChannelPath from '/@/composables/useChannelPath'
 import useCurrentViewers from '/@/composables/useCurrentViewers'
 import { useLatestFocusTour } from '/@/composables/useLatestFocusTour'
-import { useSkyCamera } from '/@/composables/useSkyCamera'
+import { FOV_MAX, useSkyCamera } from '/@/composables/useSkyCamera'
 import apis from '/@/lib/apis'
 import { useChannelTree } from '/@/store/domain/channelTree'
 import { useMessagesView } from '/@/store/domain/messagesView'
@@ -22,68 +23,86 @@ import { useChannelsStore } from '/@/store/entities/channels'
 import { useMessagesStore } from '/@/store/entities/messages'
 import useInitialFetch from '/@/views/composables/useInitialFetch'
 
+const DEFAULT_FOV = 70
+const FOV_MAX_RESTORE_MARGIN = 1
+const PARENT_TRANSITION_FOV = 72
+const PARENT_TRANSITION_MS = 850
+const PARENT_TRANSITION_OFFSET = 180
+const RECENT_MESSAGE_LIMIT = 48
+const constructThreeDPath = (channelPath: string) => `/3d/${channelPath}`
+
 const lightPos = new Vector3(5, 5, 5)
 
-const { onPointerDown, onPointerMove, onPointerUp, onWheel } = useSkyCamera()
+const {
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onWheel: onSkyWheel,
+  focusTarget,
+  getViewUp,
+  moveFocusTo,
+  setFocusTarget,
+  targetFov
+} = useSkyCamera()
 const { isPlaying, canPlay, setMessages, toggle, stop } = useLatestFocusTour()
+
+const setFovBelowParentTrigger = () => {
+  targetFov.value = FOV_MAX - FOV_MAX_RESTORE_MARGIN
+}
 
 // 再生中にユーザー操作（ドラッグ／ホイール／カードクリック等）があったらモードを解除する。
 // トグルボタン自身の操作（data-tour-toggle）は除外する。
 const maybeStopTour = (e: Event) => {
   if (!isPlaying.value) return
-  if (e.target instanceof Element && e.target.closest('[data-tour-toggle]'))
+  if (e.target instanceof Element && e.target.closest('[data-tour-toggle]')) {
     return
+  }
   stop()
 }
-const onContainerPointerDown = (e: PointerEvent) => {
-  maybeStopTour(e)
-  onPointerDown(e)
-}
-const onContainerWheel = (e: WheelEvent) => {
-  maybeStopTour(e)
-  onWheel(e)
-}
-
-// 画面遷移時に rAF / タイマーを後始末する
-onBeforeUnmount(() => stop())
 
 const route = useRoute()
+const router = useRouter()
 const { channelPathStringToId } = useChannelPath()
 const { channelTree } = useChannelTree()
 const { fetchChannels } = useChannelsStore()
 const { extendMessagesMap } = useMessagesStore()
 const { renderMessageContent } = useMessagesView()
 
-const RECENT_MESSAGE_LIMIT = 48
-
 const messages = ref<Message[]>([])
-
-// チャンネルツリー解決後にパス→IDを引き、閲覧者ビルボード用の reactive な channelId を作る
-const channelId = computed(() => {
-  const channelParam = route.params['channel'] as string
-  if (!channelParam || channelTree.value.children.length === 0) return ''
-  try {
-    return channelPathStringToId(channelParam)
-  } catch {
-    return ''
-  }
-})
-const { activeViewingUsers } = useCurrentViewers(channelId)
+const parentMessages = ref<Message[]>([])
+const currentCenter = shallowRef(new Vector3())
+const parentCenter = shallowRef<Vector3 | null>(null)
+const isParentTransitioning = ref(false)
+let parentTransitionToken = 0
+let pendingParentRoutePath: string | null = null
+let isUnmounted = false
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 useInitialFetch(() => {})
 
-watchEffect(async () => {
-  const channelParam = route.params['channel'] as string
-  if (!channelParam) return
+const toChannelPath = (param: unknown) => {
+  if (Array.isArray(param)) return param.join('/')
+  return typeof param === 'string' ? param : ''
+}
 
-  // track channelTree.children before any await so watchEffect re-runs when tree is populated
+// チャンネルツリー解決後にパス→IDを引き、閲覧者ビルボード用の reactive な channelId を作る
+const currentChannelId = computed(() => {
+  const channelPath = toChannelPath(route.params['channel'])
+  if (!channelPath || channelTree.value.children.length === 0) return ''
+  try {
+    return channelPathStringToId(channelPath)
+  } catch {
+    return ''
+  }
+})
+const { activeViewingUsers } = useCurrentViewers(currentChannelId)
+
+const fetchMessagesByChannelPath = async (channelPath: string) => {
   if (channelTree.value.children.length === 0) {
-    fetchChannels()
-    return
+    await fetchChannels()
   }
 
-  const channelId = channelPathStringToId(channelParam)
+  const channelId = channelPathStringToId(channelPath)
   const res = await apis.getMessages(
     channelId,
     RECENT_MESSAGE_LIMIT,
@@ -95,20 +114,159 @@ watchEffect(async () => {
   )
   const fetched = [...res.data].reverse()
   extendMessagesMap(fetched)
-  messages.value = fetched
-  setMessages(fetched)
   await Promise.all(fetched.map(msg => renderMessageContent(msg.id)))
+  return fetched
+}
+
+const applyMessages = (nextMessages: Message[]) => {
+  messages.value = nextMessages
+  setMessages(nextMessages)
+}
+
+let routeFetchId = 0
+watch(
+  () => route.params['channel'],
+  async channelParam => {
+    const fetchId = ++routeFetchId
+    const channelPath = toChannelPath(channelParam)
+    if (isParentTransitioning.value) {
+      if (pendingParentRoutePath === channelPath) return
+
+      parentTransitionToken++
+      pendingParentRoutePath = null
+      isParentTransitioning.value = false
+      parentCenter.value = null
+      parentMessages.value = []
+    }
+
+    currentCenter.value = new Vector3()
+    parentCenter.value = null
+    parentMessages.value = []
+    setFocusTarget(currentCenter.value)
+    targetFov.value = DEFAULT_FOV
+
+    if (!channelPath) {
+      applyMessages([])
+      return
+    }
+
+    const fetched = await fetchMessagesByChannelPath(channelPath)
+    if (fetchId !== routeFetchId || isParentTransitioning.value) return
+    applyMessages(fetched)
+  },
+  { immediate: true }
+)
+
+const getParentChannelPath = () => {
+  const channelPath = toChannelPath(route.params['channel'])
+  const parts = channelPath.split('/').filter(Boolean)
+  if (parts.length <= 1) return null
+  return parts.slice(0, -1).join('/')
+}
+
+const startParentTransition = async () => {
+  if (isParentTransitioning.value) return
+
+  const parentPath = getParentChannelPath()
+  if (!parentPath) {
+    setFovBelowParentTrigger()
+    return
+  }
+
+  stop()
+  const transitionToken = ++parentTransitionToken
+  const isCurrentTransition = () =>
+    !isUnmounted &&
+    transitionToken === parentTransitionToken &&
+    isParentTransitioning.value
+  isParentTransitioning.value = true
+  pendingParentRoutePath = null
+  const nextCenter = focusTarget.value
+    .clone()
+    .add(getViewUp().multiplyScalar(PARENT_TRANSITION_OFFSET))
+  parentCenter.value = nextCenter
+
+  try {
+    const fetchedParentMessages = await fetchMessagesByChannelPath(parentPath)
+    if (!isCurrentTransition()) return
+
+    parentMessages.value = fetchedParentMessages
+    targetFov.value = PARENT_TRANSITION_FOV
+    await moveFocusTo(nextCenter, PARENT_TRANSITION_MS)
+    if (!isCurrentTransition()) return
+
+    applyMessages(fetchedParentMessages)
+    currentCenter.value = nextCenter.clone()
+    parentCenter.value = null
+    parentMessages.value = []
+    pendingParentRoutePath = parentPath
+    await router.push({
+      path: constructThreeDPath(parentPath)
+    })
+  } catch {
+    if (isCurrentTransition()) {
+      parentCenter.value = null
+      parentMessages.value = []
+      targetFov.value = DEFAULT_FOV
+    }
+  } finally {
+    if (transitionToken === parentTransitionToken) {
+      pendingParentRoutePath = null
+      isParentTransitioning.value = false
+    }
+  }
+}
+
+const onThreeDPointerDown = (e: PointerEvent) => {
+  maybeStopTour(e)
+  if (isParentTransitioning.value) return
+  onPointerDown(e)
+}
+
+const onThreeDPointerMove = (e: PointerEvent) => {
+  if (isParentTransitioning.value) return
+  onPointerMove(e)
+}
+
+const onThreeDPointerUp = () => {
+  onPointerUp()
+}
+
+const onThreeDWheel = (e: WheelEvent) => {
+  maybeStopTour(e)
+  if (isParentTransitioning.value) return
+
+  e.preventDefault()
+  onSkyWheel(e)
+}
+
+watch(targetFov, fov => {
+  if (fov < FOV_MAX || isParentTransitioning.value) return
+  void startParentTransition()
+})
+
+useEventListener(window, 'wheel', onThreeDWheel, {
+  capture: true,
+  passive: false
+})
+
+onBeforeUnmount(() => {
+  stop()
+  setMessages([])
+  isUnmounted = true
+  parentTransitionToken++
+  pendingParentRoutePath = null
+  setFocusTarget(focusTarget.value)
 })
 </script>
 
 <template>
   <div
     style="position: relative; width: 100vw; height: 100vh"
-    @pointerdown="onContainerPointerDown"
-    @pointermove="onPointerMove"
-    @pointerup="onPointerUp"
-    @pointercancel="onPointerUp"
-    @wheel.prevent="onContainerWheel"
+    @pointerdown="onThreeDPointerDown"
+    @pointermove="onThreeDPointerMove"
+    @pointerup="onThreeDPointerUp"
+    @pointercancel="onThreeDPointerUp"
     @click="maybeStopTour"
   >
     <button
@@ -126,8 +284,16 @@ watchEffect(async () => {
       <TresAmbientLight :intensity="1" />
       <TresDirectionalLight :position="lightPos" :intensity="1" />
       <StarfieldScene />
-      <MessageSphere :messages="messages" />
-      <ViewerSphere :user-ids="activeViewingUsers" />
+      <TresGroup :position="currentCenter">
+        <MessageSphere :messages="messages" />
+        <ViewerSphere
+          v-if="!isParentTransitioning"
+          :user-ids="activeViewingUsers"
+        />
+      </TresGroup>
+      <TresGroup v-if="parentCenter" :position="parentCenter">
+        <MessageSphere :messages="parentMessages" />
+      </TresGroup>
     </TresCanvas>
   </div>
 </template>
