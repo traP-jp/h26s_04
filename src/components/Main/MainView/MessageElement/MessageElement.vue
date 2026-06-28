@@ -19,6 +19,7 @@
     >
       <MessageTools
         v-model:is-active="isActive"
+        data-interactive-area
         :show="showMessageTools"
         :class="$style.tools"
         :message-id="messageId"
@@ -44,6 +45,7 @@
             <MessageContents
               :class="$style.messageContents"
               :message-id="messageId"
+              :disable-fold="disableFold"
             />
           </div>
         </div>
@@ -53,6 +55,7 @@
         :message-id="messageId"
         :stamps="message.stamps"
         :is-archived="isArchived"
+        :disable-fold="disableFold"
       />
     </div>
   </ClickOutside>
@@ -142,7 +145,8 @@ const interactiveSelector = [
   '[role="button"]',
   '[data-message-interactive]',
   'audio',
-  'video'
+  'video',
+  '[data-interactive-area]'
 ].join(',')
 const isInteractiveTarget = (target: EventTarget | null) =>
   target instanceof Element && target.closest(interactiveSelector) !== null
@@ -189,7 +193,7 @@ const showMessageTools = computed(
 </script>
 
 <style lang="scss" module>
-$messagePadding: 32px;
+$messagePadding: 0;
 $messagePaddingMobile: 16px;
 $messageDebugWidth: 600px;
 $messageMaxHeight: 300px;
@@ -210,14 +214,17 @@ $maskImage: linear-gradient(
   overflow: hidden;
   overflow: clip;
   margin: 6px auto;
-  border: 1px dashed rgba(255, 96, 160, 0.72);
+  //border: 1px dashed rgba(255, 96, 160, 0.72);
   border-radius: 44px;
-  padding: 8px $messagePadding;
+  padding: 8px 16px;
   &[data-can-open-message-modal-on-body] {
     cursor: zoom-in;
   }
   &[data-is-modal] {
     border: none;
+    border-radius: 0;
+    margin: 6px 6px 6px 8px;
+    padding: 8px $messagePadding;
   }
   &[data-is-mobile] {
     padding: 8px $messagePaddingMobile;
