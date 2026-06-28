@@ -36,8 +36,13 @@ type SatellitePointerEvent = {
 const props = defineProps<{
   channelId: ChannelId
   // <TresCanvas> は別の Vue アプリを生成し vue-router が注入されないため、
-  // 遷移処理は通常コンテキストにある親（ChannelViewContentMain）に委譲する
-  selectChannel: (channelId: ChannelId, event: PointerEvent) => void
+  // 遷移処理は通常コンテキストにある親（ChannelViewContentMain）に委譲する。
+  // focusAngle はクリックした衛星の赤道面上のワールド角（遷移演出のフォーカス用）。
+  selectChannel: (
+    channelId: ChannelId,
+    event: PointerEvent,
+    focusAngle: number
+  ) => void
 }>()
 
 // ルート要素が <TresGroup> 1個だと vueCompilerOptions.fallthroughAttributes により
@@ -84,11 +89,14 @@ const satellites = computed(() => {
 const opacities = ref<number[]>([])
 
 const groupRef = shallowRef<Group>()
+// 最新の公転回転量。クリック時に衛星のワールド角を求めるために保持する
+let latestGroupRot = 0
 
 const { onBeforeRender } = useLoop()
 onBeforeRender(({ elapsed }) => {
   const sats = satellites.value
   const groupRot = elapsed * orbitSpeed
+  latestGroupRot = groupRot
 
   const group = groupRef.value
   if (group) group.rotation.y = groupRot
@@ -120,7 +128,12 @@ onBeforeRender(({ elapsed }) => {
 // 親 layoutContainer が pointerdown で setPointerCapture するため、canvas には pointerup が
 // 届かず TresJS の合成 click が発火しない。そこで「canvas に必ず届く pointerdown」で押下を記録し、
 // window 側の pointerup（キャプチャ対象から window へバブルする）でタップ/ドラッグを判定する。
-let press: { channelId: ChannelId; x: number; y: number } | null = null
+let press: {
+  channelId: ChannelId
+  baseAngle: number
+  x: number
+  y: number
+} | null = null
 
 const onWindowPointerUp = (event: PointerEvent) => {
   const p = press
@@ -128,13 +141,19 @@ const onWindowPointerUp = (event: PointerEvent) => {
   if (!p) return
   const moved = Math.hypot(event.clientX - p.x, event.clientY - p.y)
   if (moved > CLICK_MOVE_THRESHOLD) return // ドラッグだったので遷移しない
+  // rotation.y 適用後のワールド角（onBeforeRender と同じ式）を遷移演出のフォーカスに渡す
+  const focusAngle = p.baseAngle - latestGroupRot
   // 実際の遷移（router 依存）は親に委譲する
-  props.selectChannel(p.channelId, event)
+  props.selectChannel(p.channelId, event, focusAngle)
 }
 
-const onPointerDown = (channelId: ChannelId, event: SatellitePointerEvent) => {
+const onPointerDown = (
+  channelId: ChannelId,
+  baseAngle: number,
+  event: SatellitePointerEvent
+) => {
   const ne = event.nativeEvent
-  press = { channelId, x: ne.clientX, y: ne.clientY }
+  press = { channelId, baseAngle, x: ne.clientX, y: ne.clientY }
   window.addEventListener('pointerup', onWindowPointerUp, { once: true })
 }
 
@@ -150,7 +169,7 @@ onBeforeUnmount(() => {
       :key="sat.id"
       :position="sat.position"
     >
-      <TresMesh @pointerdown="onPointerDown(sat.id, $event)">
+      <TresMesh @pointerdown="onPointerDown(sat.id, sat.angle, $event)">
         <TresSphereGeometry :args="[SATELLITE_RADIUS, 16, 16]" />
         <TresMeshStandardMaterial
           :color="sat.color"

@@ -69,11 +69,16 @@ const messages = computed(() =>
 const { channelIdToLink } = useChannelPath()
 const { openLink } = useOpenLink()
 const { playTransition } = useSatelliteTransition()
-const selectChannel = (channelId: ChannelId, event: PointerEvent) => {
+const selectChannel = (
+  channelId: ChannelId,
+  event: PointerEvent,
+  focusAngle: number
+) => {
   const link = channelIdToLink(channelId)
   if (!link) return
-  // openLink の第3引数（router.push 直前のフック）で遷移演出を差し込めるようにしておく
-  openLink(event, link, () => playTransition(channelId))
+  // openLink の第3引数（router.push 直前のフック）で遷移演出を差し込めるようにしておく。
+  // focusAngle はクリックした衛星の向き（カメラを正対させてからズームインする）
+  openLink(event, link, () => playTransition(channelId, focusAngle))
 }
 </script>
 
