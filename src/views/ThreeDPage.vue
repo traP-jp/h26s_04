@@ -21,6 +21,7 @@ import { useMessagesStore } from '/@/store/entities/messages'
 import useInitialFetch from '/@/views/composables/useInitialFetch'
 
 const DEFAULT_FOV = 70
+const FOV_MAX_RESTORE_MARGIN = 1
 const PARENT_TRANSITION_FOV = 72
 const PARENT_TRANSITION_MS = 850
 const PARENT_TRANSITION_OFFSET = 180
@@ -39,6 +40,10 @@ const {
   setFocusTarget,
   targetFov
 } = useSkyCamera()
+
+const setFovBelowParentTrigger = () => {
+  targetFov.value = FOV_MAX - FOV_MAX_RESTORE_MARGIN
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -132,7 +137,7 @@ const startParentTransition = async () => {
 
   const parentPath = getParentChannelPath()
   if (!parentPath) {
-    targetFov.value = DEFAULT_FOV
+    setFovBelowParentTrigger()
     return
   }
 

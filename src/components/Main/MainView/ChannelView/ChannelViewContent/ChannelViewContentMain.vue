@@ -70,6 +70,7 @@ const props = defineProps<{
 
 const DEFAULT_FOV = 70
 const CAMERA_RADIUS = 90
+const FOV_MAX_RESTORE_MARGIN = 1
 const MESSAGE_SPHERE_RADIUS = 40
 const CHANNEL_SCALE = 1
 const CHILD_ORBIT_RADIUS = 100
@@ -86,6 +87,7 @@ const PARENT_START_OUTSIDE_ANGLE = Math.PI / 5
 const PARENT_CAMERA_TOP_PHI = (Math.PI * 5) / 12
 const PARENT_CAMERA_SIDE_PHI = Math.PI / 2
 const PARENT_CAMERA_THETA_SWEEP = -Math.PI / 4
+const CHILD_TRANSITION_RESET_DELAY_MS = 700
 
 const toScaleVector = (scale: number) => new Vector3(scale, scale, scale)
 
@@ -131,9 +133,11 @@ const parentTransitionChannelId = ref<ChannelId | null>(null)
 const parentTransitionSourceChannelId = ref<ChannelId | null>(null)
 const parentTransitionSourceAngle = ref<number>()
 const isParentTransitioning = ref(false)
+const isChildTransitioning = ref(false)
 let parentTransitionToken = 0
 let pendingParentRouteChannelId: ChannelId | null = null
 let isUnmounted = false
+let childTransitionResetTimer: number | undefined
 
 const resetParentTransitionPreview = () => {
   parentCenter.value = null
@@ -150,6 +154,10 @@ const clearMessageOverride = () => {
   currentScale.value = CHANNEL_SCALE
   cameraRadius.value = CAMERA_RADIUS
   resetParentTransitionPreview()
+}
+
+const setFovBelowParentTrigger = () => {
+  targetFov.value = FOV_MAX - FOV_MAX_RESTORE_MARGIN
 }
 
 const cameraRadiusForSphereScale = (scale: number) =>
@@ -319,7 +327,7 @@ const startParentTransition = async () => {
 
   const parent = getParentChannel()
   if (!parent) {
-    targetFov.value = DEFAULT_FOV
+    setFovBelowParentTrigger()
     return
   }
 
@@ -401,7 +409,9 @@ watch(
     currentScale.value = CHANNEL_SCALE
     cameraRadius.value = CAMERA_RADIUS
     setFocusTarget(currentCenter.value)
-    targetFov.value = DEFAULT_FOV
+    if (!isChildTransitioning.value) {
+      targetFov.value = DEFAULT_FOV
+    }
   },
   { immediate: true }
 )
@@ -422,6 +432,9 @@ onBeforeUnmount(() => {
   isUnmounted = true
   parentTransitionToken++
   pendingParentRouteChannelId = null
+  if (childTransitionResetTimer !== undefined) {
+    window.clearTimeout(childTransitionResetTimer)
+  }
 })
 
 // 子チャンネル衛星のタップ時の遷移（router 依存のため canvas 外のここで処理する）
@@ -436,7 +449,20 @@ const selectChannel = (
   if (!link) return
   // openLink の第3引数（router.push 直前のフック）で遷移演出を差し込めるようにしておく。
   // focusAngle はクリックした衛星の向き（カメラを正対させてからズームインする）
-  openLink(event, link, () => playTransition(channelId, focusAngle))
+  openLink(event, link, async () => {
+    isChildTransitioning.value = true
+    if (childTransitionResetTimer !== undefined) {
+      window.clearTimeout(childTransitionResetTimer)
+    }
+    try {
+      await playTransition(channelId, focusAngle)
+    } finally {
+      childTransitionResetTimer = window.setTimeout(() => {
+        isChildTransitioning.value = false
+        childTransitionResetTimer = undefined
+      }, CHILD_TRANSITION_RESET_DELAY_MS)
+    }
+  })
 }
 </script>
 

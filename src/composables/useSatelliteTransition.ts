@@ -1,7 +1,7 @@
 import { FOV_MAX, useSkyCamera } from '/@/composables/useSkyCamera'
 import type { ChannelId } from '/@/types/entity-ids'
 
-const DEFAULT_FOV = 70
+const FOV_MAX_RESTORE_MARGIN = 1
 // まず衛星へ正対するようカメラを回す時間 → それからズームインする時間
 const ORIENT_MS = 460
 const ZOOM_IN_MS = 460
@@ -73,7 +73,8 @@ export const useSatelliteTransition = () => {
     const startTheta = camTheta.value
     const startPhi = camPhi.value
     const startFov = targetFov.value
-    const restoreFov = startFov >= FOV_MAX ? DEFAULT_FOV : startFov
+    const restoreFov =
+      startFov >= FOV_MAX ? FOV_MAX - FOV_MAX_RESTORE_MARGIN : startFov
 
     // 衛星が画面中央に来るのは、カメラが原点を挟んで衛星の反対側にいるとき
     // （カメラは常に原点を向くため）。赤道面に水平化して正対させる。
